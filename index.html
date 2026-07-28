@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}CoachPage DZ — منصة التدريب الرياضي{% endblock %}
+{% block content %}
+<div style="min-height:100vh;padding:36px 20px;max-width:480px;margin:0 auto;">
+
+  <!-- HERO -->
+  <div class="fade-up" style="text-align:center;margin-bottom:36px;">
+    <div style="position:relative;display:inline-block;margin-bottom:18px;">
+      <div style="width:72px;height:72px;background:var(--green-dim);border:2px solid var(--green);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto;" class="glow-ring">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round">
+          <rect x="1" y="14" width="6" height="12" rx="2"/>
+          <rect x="33" y="14" width="6" height="12" rx="2"/>
+          <rect x="7" y="10" width="5" height="20" rx="2"/>
+          <rect x="28" y="10" width="5" height="20" rx="2"/>
+          <rect x="12" y="18" width="16" height="4" rx="2"/>
+        </svg>
+      </div>
+    </div>
+    <h1 style="font-size:30px;font-weight:900;color:var(--text);margin:0 0 4px;letter-spacing:-0.5px;">
+      CoachPage <span style="color:var(--green);">DZ</span>
+    </h1>
+    <p style="color:var(--muted);font-size:13px;margin:6px 0 0;">منصة التدريب الرياضي الجزائرية — احترافية، ذكية، مجانية</p>
+  </div>
+
+  <!-- QUICK ACCESS PILL BUTTONS -->
+  <div class="fade-up delay-1" style="display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;justify-content:center;">
+    <a href="/login" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--green);border-radius:999px;font-size:12px;font-weight:800;color:#000;text-decoration:none;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      دخول المدرب
+    </a>
+    <a href="/client/access" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--card2);border:1px solid var(--border2);border-radius:999px;font-size:12px;font-weight:800;color:var(--text2);text-decoration:none;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      دخول العميل
+    </a>
+    <a href="/register" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--card);border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:800;color:var(--muted);text-decoration:none;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      سجّل كمدرب
+    </a>
+  </div>
+
+  {% if coaches %}
+  <!-- SEARCH + FILTER BAR -->
+  <div class="fade-up delay-1" style="margin-bottom:18px;">
+    <!-- Search -->
+    <div style="position:relative;margin-bottom:10px;">
+      <input type="text" id="coach-search" placeholder="ابحث عن مدرب..." oninput="filterCoaches()"
+             style="width:100%;background:var(--card2);border:1.5px solid var(--border2);border-radius:12px;padding:11px 16px 11px 42px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
+             onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border2)'"/>
+      <div style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+    </div>
+    <!-- Filter Pills -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;">
+      <button onclick="setFilter('all')" id="filter-all" class="filter-pill active-pill">الكل ({{ coaches|length }})</button>
+      <button onclick="setFilter('تنشيف')" id="filter-تنشيف" class="filter-pill">تنشيف</button>
+      <button onclick="setFilter('تضخيم')" id="filter-تضخيم" class="filter-pill">تضخيم</button>
+      <button onclick="setFilter('cheap')" id="filter-cheap" class="filter-pill">أقل من 5000 دج</button>
+      <button onclick="setFilter('premium')" id="filter-premium" class="filter-pill">+5000 دج</button>
+    </div>
+  </div>
+
+  <!-- COACHES LIST -->
+  <div style="margin-bottom:28px;" id="coaches-list">
+    {% for coach in coaches %}
+    <div class="coach-card card fade-up"
+         data-name="{{ (coach.full_name or coach.username)|lower }}"
+         data-specialty="{{ coach.specialty|lower }}"
+         data-price="{{ coach.subscription_price }}"
+         style="margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;border-right:3px solid transparent;transition:all 0.2s;"
+         onclick="window.location='/coach/{{ coach.username }}'"
+         onmouseover="this.style.borderRightColor='var(--green)'"
+         onmouseout="this.style.borderRightColor='transparent'">
+      <div style="width:52px;height:52px;background:var(--green-dim);border:1.5px solid #86efac;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;font-weight:900;color:var(--green);">
+        {{ (coach.full_name or coach.username)[0] }}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:800;font-size:15px;color:var(--text);margin-bottom:2px;">{{ coach.full_name or coach.username }}</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:var(--green-dim);border:1px solid rgba(34,197,94,0.2);border-radius:999px;padding:2px 8px;margin-bottom:4px;">
+          <div style="width:5px;height:5px;background:var(--green);border-radius:50%;"></div>
+          <span style="font-size:10px;font-weight:700;color:var(--green2);">{{ coach.specialty or 'مدرب رياضي معتمد' }}</span>
+        </div>
+        {% if coach.bio %}
+        <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ coach.bio[:55] }}{% if coach.bio|length > 55 %}…{% endif %}</div>
+        {% endif %}
+      </div>
+      <div style="text-align:center;flex-shrink:0;">
+        <div style="font-size:18px;font-weight:900;color:var(--green);">{{ "{:,}".format(coach.subscription_price) }}</div>
+        <div style="font-size:10px;color:var(--muted);">دج/شهر</div>
+        <div style="margin-top:5px;">
+          <span class="badge-green" style="font-size:10px;padding:1px 7px;">{{ coach.clients|length }} عميل</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- NO RESULTS MESSAGE (hidden by default) -->
+  <div id="no-results" style="display:none;text-align:center;padding:32px 20px;" class="card">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--border2)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <p style="font-size:14px;color:var(--text2);margin:0;">ما لقيناش نتائج مطابقة</p>
+  </div>
+
+  {% else %}
+  <div class="fade-up delay-1 card" style="text-align:center;padding:36px 20px;">
+    <div style="width:52px;height:52px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <p style="font-size:15px;font-weight:700;color:var(--text2);margin:0 0 6px;">لا يوجد مدربون بعد</p>
+    <p style="font-size:13px;color:var(--muted);margin:0;">كن أول مدرب يسجّل في المنصة!</p>
+  </div>
+  {% endif %}
+
+  <!-- JOIN CTA -->
+  <div class="fade-up" style="margin-bottom:28px;">
+    <a href="/register" style="text-decoration:none;display:block;">
+      <div style="border:1.5px dashed var(--green);border-radius:16px;padding:22px;text-align:center;background:var(--green-dim);transition:all 0.2s;"
+           onmouseover="this.style.boxShadow='0 0 16px rgba(34,197,94,0.15)'"
+           onmouseout="this.style.boxShadow='none'">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--green);border-radius:10px;margin-bottom:10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div style="font-size:16px;font-weight:800;color:var(--green2);margin-bottom:4px;">انضم كمدرب</div>
+        <p style="font-size:12px;color:var(--text2);margin:0;">سجّل حسابك وابدأ تدير عملاءك بالذكاء الاصطناعي</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- FOOTER LINKS -->
+  <div style="text-align:center;font-size:12px;color:var(--muted);padding-bottom:20px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;" class="fade-up">
+    <a href="/login" style="color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      دخول المدربين
+    </a>
+    <span style="color:var(--border2);">|</span>
+    <a href="/client/access" style="color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      دخول العميل
+    </a>
+    <span style="color:var(--border2);">|</span>
+    <a href="/guide/coach" style="color:var(--green2);text-decoration:none;display:flex;align-items:center;gap:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      دليل المدربين
+    </a>
+    <span style="color:var(--border2);">|</span>
+    <a href="/admin" style="color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      المشرف
+    </a>
+  </div>
+
+</div>
+
+<style>
+.filter-pill {
+  padding:6px 14px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);font-family:Tajawal,sans-serif;white-space:nowrap;transition:all 0.2s;flex-shrink:0;
+}
+.filter-pill:hover { border-color:var(--green);color:var(--green2); }
+.active-pill { background:var(--green) !important;border-color:var(--green) !important;color:#000 !important; }
+</style>
+
+<script>
+let currentFilter = 'all';
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active-pill'));
+  const active = document.getElementById('filter-' + f);
+  if (active) active.classList.add('active-pill');
+  filterCoaches();
+}
+
+function filterCoaches() {
+  const q = (document.getElementById('coach-search')?.value || '').trim().toLowerCase();
+  const cards = document.querySelectorAll('.coach-card');
+  let visible = 0;
+  cards.forEach(c => {
+    const name = c.dataset.name || '';
+    const spec = c.dataset.specialty || '';
+    const price = parseInt(c.dataset.price || '0');
+    const matchQ = !q || name.includes(q) || spec.includes(q);
+    let matchF = true;
+    if (currentFilter === 'تنشيف') matchF = spec.includes('تنشيف') || name.includes('تنشيف');
+    else if (currentFilter === 'تضخيم') matchF = spec.includes('تضخيم') || name.includes('تضخيم');
+    else if (currentFilter === 'cheap') matchF = price < 5000;
+    else if (currentFilter === 'premium') matchF = price >= 5000;
+    const show = matchQ && matchF;
+    c.style.display = show ? 'flex' : 'none';
+    if (show) visible++;
+  });
+  const nr = document.getElementById('no-results');
+  if (nr) nr.style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}
