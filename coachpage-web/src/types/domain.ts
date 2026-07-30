@@ -45,6 +45,7 @@ export interface Client {
 }
 
 export interface PlatformSettings {
+  id: number;
   owner_whatsapp: string;
   owner_ccp: string;
   coach_monthly_price: number;

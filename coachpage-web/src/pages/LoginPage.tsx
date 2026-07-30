@@ -49,7 +49,14 @@ export function LoginPage() {
             <Input id="email" type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="password">كلمة المرور</Label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <Label htmlFor="password" className="mb-0">
+                كلمة المرور
+              </Label>
+              <Link to="/forgot-password" className="text-xs font-medium text-brand-600 hover:underline">
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
             <Input
               id="password"
               type="password"
