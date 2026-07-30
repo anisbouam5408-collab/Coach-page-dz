@@ -6,6 +6,7 @@ import { Input, Label } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
+import { savePendingRegistration } from "@/lib/pendingRegistration";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -24,7 +25,17 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
 
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+    // Saved up front: if Supabase requires email confirmation, the session
+    // (and this form's state) won't exist anymore by the time the coach
+    // clicks the confirm link — the auth store finishes the signup then,
+    // reading this back.
+    savePendingRegistration({ fullName, username, phone, email });
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+    });
     if (signUpError || !data.user) {
       setError(signUpError?.message ?? "تعذّر إنشاء الحساب.");
       setLoading(false);
