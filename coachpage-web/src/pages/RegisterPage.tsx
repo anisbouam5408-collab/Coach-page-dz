@@ -62,6 +62,7 @@ export function RegisterPage() {
       email,
       phone_number: phone,
       subscription_status: "TRIAL",
+      password_hash: crypto.randomUUID(),
     });
 
     if (insertError) {

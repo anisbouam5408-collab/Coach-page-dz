@@ -48,11 +48,19 @@ async function ensureCoachRow(userId: string): Promise<Coach | null> {
       email,
       phone_number: phone,
       subscription_status: "TRIAL",
+      // Legacy column from the original Flask app's own password auth,
+      // which this app doesn't use (Supabase Auth handles it) but the
+      // column is still NOT NULL with no default — a random placeholder
+      // keeps the insert valid without meaning anything.
+      password_hash: crypto.randomUUID(),
     })
     .select()
     .single();
 
-  if (error) return null;
+  if (error) {
+    console.error("Failed to create coach row:", error.message);
+    return null;
+  }
   clearPendingRegistration();
   return created as Coach;
 }
