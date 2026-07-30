@@ -16,26 +16,37 @@ interface AuthState {
 
 /**
  * When email confirmation is enabled, the coach's session only becomes
- * available once they click the confirm link — potentially in a fresh
- * page load with none of the signup form's data in memory. We stash that
- * data in localStorage at signup time and finish creating the `coaches`
- * row here, the first time we see a confirmed session with no matching row.
+ * available once they click the confirm link — often in a completely
+ * different browser/app than the one used to fill out the signup form
+ * (e.g. a mail app's in-app browser on mobile), so localStorage saved at
+ * signup time may not be there. The signup call also stores the same
+ * details in the auth user's metadata, which travels with the account
+ * server-side and is always available here — that's the primary source;
+ * localStorage and generated defaults are just fallbacks so this never
+ * gets stuck unable to create the row.
  */
 async function ensureCoachRow(userId: string): Promise<Coach | null> {
   const { data: existing } = await supabase.from("coaches").select("*").eq("user_id", userId).maybeSingle();
   if (existing) return existing as Coach;
 
+  const { data: userData } = await supabase.auth.getUser();
+  const authUser = userData.user;
+  const metadata = (authUser?.user_metadata ?? {}) as { full_name?: string; username?: string; phone?: string };
   const pending = readPendingRegistration();
-  if (!pending) return null;
+
+  const username = metadata.username || pending?.username || `coach_${userId.slice(0, 8)}`;
+  const fullName = metadata.full_name || pending?.fullName || authUser?.email?.split("@")[0] || "مدرب جديد";
+  const phone = metadata.phone || pending?.phone || "";
+  const email = authUser?.email || pending?.email || "";
 
   const { data: created, error } = await supabase
     .from("coaches")
     .insert({
       user_id: userId,
-      username: pending.username,
-      full_name: pending.fullName,
-      email: pending.email,
-      phone_number: pending.phone,
+      username,
+      full_name: fullName,
+      email,
+      phone_number: phone,
       subscription_status: "TRIAL",
     })
     .select()

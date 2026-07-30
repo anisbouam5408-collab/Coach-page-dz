@@ -23,13 +23,20 @@ const EMPTY_FORM: ClientFormState = { id: null, full_name: "", weight: "", fitne
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { coach, signOut } = useAuthStore();
+  const { coach, signOut, refreshCoach } = useAuthStore();
   const { plans } = usePlans();
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [form, setForm] = useState<ClientFormState>(EMPTY_FORM);
   const [formOpen, setFormOpen] = useState(false);
+  const [showRetry, setShowRetry] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (coach) return;
+    const timeout = setTimeout(() => setShowRetry(true), 4000);
+    return () => clearTimeout(timeout);
+  }, [coach]);
 
   useEffect(() => {
     if (!coach) return;
@@ -46,7 +53,31 @@ export function DashboardPage() {
 
   if (!coach) {
     return (
-      <div className="flex min-h-svh items-center justify-center text-ink-muted">جارٍ تحميل بيانات حسابك...</div>
+      <div className="flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center text-ink-muted">
+        <p>جارٍ تحميل بيانات حسابك...</p>
+        {showRetry && (
+          <div className="flex flex-col items-center gap-3">
+            <p className="max-w-xs text-sm text-ink-faint">
+              يبدو أن هذا يستغرق وقتاً أطول من المعتاد. جرّب إعادة المحاولة أو سجّل الدخول من جديد.
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => void refreshCoach()}>
+                إعادة المحاولة
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  void signOut();
+                  navigate("/login");
+                }}
+              >
+                تسجيل الخروج
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 

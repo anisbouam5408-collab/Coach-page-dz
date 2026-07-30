@@ -34,7 +34,14 @@ export function RegisterPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        // Stored on the auth user itself (not just localStorage) so the
+        // confirmed-session handler can rebuild the `coaches` row even if
+        // the confirmation link is opened in a different browser/app than
+        // the one used to fill out this form (very common on mobile).
+        data: { full_name: fullName, username, phone },
+      },
     });
     if (signUpError || !data.user) {
       setError(signUpError?.message ?? "تعذّر إنشاء الحساب.");
