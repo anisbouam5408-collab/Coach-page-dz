@@ -8,6 +8,7 @@ import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
 import { usePlans } from "@/hooks/usePlans";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import { buildRenewWhatsAppLink } from "@/lib/whatsapp";
 import type { Client } from "@/types/domain";
 
@@ -25,6 +26,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { coach, signOut, refreshCoach } = useAuthStore();
   const { plans } = usePlans();
+  const platformSettings = usePlatformSettings();
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [form, setForm] = useState<ClientFormState>(EMPTY_FORM);
@@ -253,6 +255,7 @@ export function DashboardPage() {
                     email: coach.email ?? "",
                     planLabel: plan.label,
                     priceDzd: plan.price_dzd,
+                    ownerWhatsapp: platformSettings?.owner_whatsapp || "213553093511",
                   })}
                   target="_blank"
                   rel="noreferrer"

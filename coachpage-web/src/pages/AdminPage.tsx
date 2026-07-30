@@ -296,9 +296,13 @@ export function AdminPage() {
                 <Input
                   id="s_whatsapp"
                   dir="ltr"
+                  placeholder="213xxxxxxxxx"
                   value={settings.owner_whatsapp}
                   onChange={(e) => setSettings({ ...settings, owner_whatsapp: e.target.value })}
                 />
+                <p className="mt-1 text-xs text-ink-faint">
+                  بصيغة دولية بدون + وبدون صفر في البداية، مثال: 213553093511
+                </p>
               </div>
               <div>
                 <Label htmlFor="s_ccp">CCP / بريدي موب</Label>
