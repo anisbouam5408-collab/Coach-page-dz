@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORMA — Moteur de nutrition sportive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Sans:wght@300;400;500;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#10151A;
+    --panel:#1A2129;
+    --panel-raised:#212A33;
+    --ink:#F3F5F7;
+    --ink-dim:#8B96A3;
+    --line:#2C3640;
+    --indigo:#5468E0;
+    --indigo-soft:#232B4A;
+    --gold:#C9A227;
+    --gold-soft:#332C16;
+    --rose:#C2637A;
+    --green:#4A9B7F;
+    --green-soft:#173229;
+    --danger:#E2584A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--void);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    min-height:100vh;
+    padding:40px 16px 90px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:24px;margin-bottom:36px;flex-wrap:wrap;
+  }
+  .wordmark{
+    font-family:'Cairo',sans-serif;font-weight:900;font-size:clamp(30px,4.5vw,44px);
+    letter-spacing:-.02em;color:var(--ink);margin:0;line-height:1;
+  }
+  .wordmark .dot{color:var(--gold);}
+  .kicker{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;
+    color:var(--indigo);text-transform:uppercase;margin:0 0 8px;
+  }
+  .tagline{font-size:13px;color:var(--ink-dim);margin:8px 0 0;}
+  .header-meta{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-dim);
+    text-align:right;line-height:1.8;
+  }
+
+  .toolbar{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    margin-bottom:20px;flex-wrap:wrap;
+  }
+  .client-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+  .client-tab{
+    font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;padding:8px 14px;border-radius:20px;
+    border:1.5px solid var(--line);background:var(--panel);color:var(--ink-dim);cursor:pointer;
+    display:flex;align-items:center;gap:8px;
+  }
+  .client-tab.active{border-color:var(--indigo);color:var(--ink);background:var(--indigo-soft);font-weight:600;}
+  .client-tab .rm{opacity:.6;font-size:14px;}
+  .client-tab .rm:hover{opacity:1;color:var(--danger);}
+  .add-client{
+    font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;padding:8px 14px;border-radius:20px;
+    border:1.5px dashed var(--line);background:transparent;color:var(--ink-dim);cursor:pointer;
+  }
+  .add-client:hover{border-color:var(--indigo);color:var(--indigo);}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:20px;}
+  @media(min-width:940px){ .grid{grid-template-columns: 1fr 1.2fr;} }
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;}
+  .card h2{
+    font-family:'Cairo',sans-serif;font-weight:700;font-size:15px;
+    margin:0 0 22px;color:var(--ink);
+    padding-bottom:14px;border-bottom:1px solid var(--line);letter-spacing:.01em;
+  }
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;color:var(--ink-dim);margin-bottom:7px;font-weight:500;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  input[type=number], input[type=text], select{
+    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:8px;
+    background:var(--void);font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;color:var(--ink);
+  }
+  input::placeholder{color:#546069;}
+  input:focus, select:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px var(--indigo-soft);}
+  select{appearance:none;}
+
+  .seg{display:grid;grid-auto-flow:column;gap:8px;}
+  .seg button, .goal-grid button, .meals-grid button{
+    font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:10px 6px;border-radius:8px;
+    border:1.5px solid var(--line);background:var(--void);color:var(--ink-dim);cursor:pointer;
+    transition:all .12s;
+  }
+  .seg button.active{background:var(--indigo);border-color:var(--indigo);color:#fff;font-weight:700;}
+  .goal-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .goal-grid button.active{border-color:var(--gold);background:var(--gold-soft);color:var(--gold);font-weight:700;}
+  .meals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .meals-grid button.active{border-color:var(--green);background:var(--green-soft);color:var(--green);font-weight:700;}
+
+  .field-hint{font-size:11px;color:var(--ink-dim);margin-top:6px;opacity:.85;}
+  .macro-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+  .output{
+    background:linear-gradient(180deg,var(--panel-raised),var(--panel));
+    border:1px solid var(--line);border-radius:14px;padding:30px 28px;
+  }
+  .out-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .out-head .client{font-family:'Cairo',sans-serif;font-weight:700;font-size:16px;}
+  .out-head .coach{font-size:11.5px;color:var(--ink-dim);margin-top:3px;}
+  .out-head .date{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-dim);}
+
+  .gauge-wrap{display:flex;justify-content:center;padding:22px 0 6px;}
+  .gauge-num{font-size:40px;font-weight:700;fill:var(--ink);font-family:'IBM Plex Mono',monospace;}
+  .gauge-unit{font-size:11px;fill:var(--ink-dim);font-family:'IBM Plex Mono',monospace;}
+  .gauge-goal{text-align:center;font-size:12px;color:var(--ink-dim);margin-top:-2px;margin-bottom:24px;font-weight:600;letter-spacing:.02em;}
+
+  .stat-strip{
+    display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:26px;
+  }
+  .stat-cell{background:var(--panel);padding:14px 8px;text-align:center;}
+  .stat-cell .label{font-size:10px;color:var(--ink-dim);margin-bottom:6px;}
+  .stat-cell .val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--ink);}
+
+  .macro-title{font-family:'Cairo',sans-serif;font-weight:700;font-size:13px;margin:0 0 14px;color:var(--ink-dim);}
+  .macro-rows{display:grid;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+  .macro-row{background:var(--panel);display:flex;align-items:center;justify-content:space-between;padding:13px 16px;position:relative;}
+  .macro-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .macro-row.protein::before{background:var(--indigo);}
+  .macro-row.carbs::before{background:var(--gold);}
+  .macro-row.fat::before{background:var(--rose);}
+  .macro-row .name{font-size:13.5px;font-weight:600;}
+  .macro-row .figures{display:flex;align-items:baseline;gap:8px;}
+  .macro-row .grams{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14.5px;}
+  .macro-row .pct{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-dim);}
+
+  .meal-split{margin-top:22px;}
+  .meal-card{
+    display:grid;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;border:1px solid var(--line);
+  }
+  .meal-item{background:var(--panel);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;}
+  .meal-item .mname{color:var(--ink-dim);font-weight:600;}
+  .meal-item .mvals{font-family:'IBM Plex Mono',monospace;color:var(--ink);display:flex;gap:10px;}
+  .meal-item .mvals span{opacity:.85;}
+
+  .misc-row{
+    margin-top:16px;display:flex;justify-content:space-between;align-items:center;
+    padding:13px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel);
+  }
+  .misc-row .label{font-size:13px;color:var(--ink-dim);}
+  .misc-row .val{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--ink);}
+  .misc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+
+  .actions{display:flex;gap:10px;margin-top:22px;}
+  .actions button{
+    flex:1;font-family:'Cairo',sans-serif;font-weight:700;font-size:13px;
+    padding:13px;border-radius:9px;border:none;cursor:pointer;
+  }
+  .btn-primary{background:var(--indigo);color:#fff;}
+  .btn-secondary{background:transparent;border:1.5px solid var(--line) !important;color:var(--ink);}
+  .copied-msg{text-align:center;font-size:11.5px;color:var(--indigo);margin-top:8px;font-weight:600;height:14px;}
+
+  footer{
+    text-align:center;margin-top:40px;font-size:10.5px;color:var(--ink-dim);
+    font-family:'IBM Plex Mono',monospace;letter-spacing:.05em;
+  }
+
+  @media print{
+    body{background:#fff;color:#000;padding:0;}
+    header,.card:not(.output), footer, .actions, .toolbar{display:none !important;}
+    .grid{display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="kicker">Nutrition Intelligence for Coaches</p>
+      <h1 class="wordmark">FORMA<span class="dot">.</span></h1>
+      <p class="tagline">Moteur de calcul de calories et macros pour coachs sportifs et nutritionnistes</p>
+    </div>
+    <div class="header-meta">V1.1<br>ENGINE: MIFFLIN / KATCH-MCARDLE</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="client-tabs" id="clientTabs"></div>
+    <button class="add-client" onclick="addClient()">+ Nouveau client</button>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2>Profil du client</h2>
+
+      <div class="field">
+        <label>Nom du client (optionnel)</label>
+        <input type="text" id="clientName" placeholder="Ex : Sofiane Benali">
+      </div>
+
+      <div class="field">
+        <label>Sexe</label>
+        <div class="seg" id="genderSeg">
+          <button data-val="male" class="active">Homme</button>
+          <button data-val="female">Femme</button>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Âge (ans)</label>
+          <input type="number" id="age" value="28" min="14" max="90">
+        </div>
+        <div class="field">
+          <label>Poids (kg)</label>
+          <input type="number" id="weight" value="75" min="30" max="250" step="0.1">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Taille (cm)</label>
+          <input type="number" id="height" value="175" min="120" max="230">
+        </div>
+        <div class="field">
+          <label>Masse grasse % (optionnel)</label>
+          <input type="number" id="bodyfat" placeholder="Ex : 18" min="3" max="60" step="0.1">
+        </div>
+      </div>
+      <p class="field-hint" style="margin-top:-8px;">Si renseignée, la formule Katch-McArdle (plus précise) est utilisée</p>
+
+      <div class="field">
+        <label>Niveau d'activité</label>
+        <select id="activity">
+          <option value="1.2">Sédentaire — travail de bureau, pas de sport</option>
+          <option value="1.375">Activité légère — sport 1-3 jours/semaine</option>
+          <option value="1.55" selected>Activité modérée — sport 3-5 jours/semaine</option>
+          <option value="1.725">Activité élevée — sport 6-7 jours/semaine</option>
+          <option value="1.9">Activité intense — athlète pro / travail physique</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Objectif</label>
+        <div class="goal-grid" id="goalSeg">
+          <button data-val="-0.20">Sèche</button>
+          <button data-val="0" class="active">Maintien</button>
+          <button data-val="0.15">Prise de masse</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Répartition des macros % (protéines / glucides / lipides)</label>
+        <div class="macro-inputs">
+          <input type="number" id="pProtein" value="30" min="10" max="60">
+          <input type="number" id="pCarbs" value="45" min="10" max="65">
+          <input type="number" id="pFat" value="25" min="10" max="50">
+        </div>
+        <p class="field-hint" id="macroSumHint">Total : 100%</p>
+      </div>
+
+      <div class="field">
+        <label>Nombre de repas par jour</label>
+        <div class="meals-grid" id="mealsSeg">
+          <button data-val="3">3</button>
+          <button data-val="4" class="active">4</button>
+          <button data-val="5">5</button>
+          <button data-val="6">6</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label>Nom du coach / centre</label>
+        <input type="text" id="coachName" placeholder="Ex : Coach Yacine — Coaching personnel">
+      </div>
+    </div>
+
+    <div class="output">
+      <div class="out-head">
+        <div>
+          <div class="client" id="slipClient">—</div>
+          <div class="coach" id="slipCoach">Suivi par : —</div>
+        </div>
+        <div class="date" id="slipDate">—</div>
+      </div>
+
+      <div class="gauge-wrap">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="96" fill="none" stroke="#2C3640" stroke-width="14"/>
+          <circle id="ringCarbs" cx="110" cy="110" r="96" fill="none" stroke="#C9A227" stroke-width="14" stroke-linecap="round" transform="rotate(-90 110 110)"/>
+          <circle cx="110" cy="110" r="78" fill="none" stroke="#2C3640" stroke-width="14"/>
+          <circle id="ringProtein" cx="110" cy="110" r="78" fill="none" stroke="#5468E0" stroke-width="14" stroke-linecap="round" transform="rotate(-90 110 110)"/>
+          <circle cx="110" cy="110" r="60" fill="none" stroke="#2C3640" stroke-width="14"/>
+          <circle id="ringFat" cx="110" cy="110" r="60" fill="none" stroke="#C2637A" stroke-width="14" stroke-linecap="round" transform="rotate(-90 110 110)"/>
+          <text x="110" y="104" text-anchor="middle" class="gauge-num" id="outCalories">0</text>
+          <text x="110" y="126" text-anchor="middle" class="gauge-unit">kcal / jour</text>
+        </svg>
+      </div>
+      <p class="gauge-goal" id="outGoalLabel">— Renseignez le profil —</p>
+
+      <div class="stat-strip">
+        <div class="stat-cell"><div class="label">BMR</div><div class="val" id="outBMR">—</div></div>
+        <div class="stat-cell"><div class="label">TDEE</div><div class="val" id="outTDEE">—</div></div>
+        <div class="stat-cell"><div class="label">Écart</div><div class="val" id="outDelta">—</div></div>
+        <div class="stat-cell"><div class="label">IMC</div><div class="val" id="outBMI">—</div></div>
+      </div>
+
+      <p class="macro-title">Répartition des macros</p>
+      <div class="macro-rows">
+        <div class="macro-row protein">
+          <span class="name">Protéines</span>
+          <span class="figures"><span class="pct" id="pctProtein">30%</span><span class="grams" id="gProtein">0g</span></span>
+        </div>
+        <div class="macro-row carbs">
+          <span class="name">Glucides</span>
+          <span class="figures"><span class="pct" id="pctCarbs">45%</span><span class="grams" id="gCarbs">0g</span></span>
+        </div>
+        <div class="macro-row fat">
+          <span class="name">Lipides</span>
+          <span class="figures"><span class="pct" id="pctFat">25%</span><span class="grams" id="gFat">0g</span></span>
+        </div>
+      </div>
+
+      <div class="meal-split">
+        <p class="macro-title" style="margin-top:22px;">Répartition par repas</p>
+        <div class="meal-card" id="mealCard"></div>
+      </div>
+
+      <div class="misc-grid">
+        <div class="misc-row"><span class="label">Eau recommandée</span><span class="val" id="outWater">—</span></div>
+        <div class="misc-row"><span class="label">Fibres recommandées</span><span class="val" id="outFiber">—</span></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="window.print()">Imprimer / PDF</button>
+        <button class="btn-secondary" onclick="copyPlan()">Copier pour WhatsApp</button>
+      </div>
+      <p class="copied-msg" id="copiedMsg"></p>
+    </div>
+
+  </div>
+
+  <footer>FORMA · OUTIL INTERNE POUR COACHS ET NUTRITIONNISTES · RÉSULTATS ESTIMATIFS, NE REMPLACE PAS UN AVIS MÉDICAL</footer>
+</div>
+
+<script>
+const CIRC = {carbs: 2*Math.PI*96, protein: 2*Math.PI*78, fat: 2*Math.PI*60};
+
+function blankClient(name){
+  return {
+    name: name || '',
+    gender:'male', age:28, weight:75, height:175, bodyfat:'',
+    activity:1.55, goalMod:0, pProtein:30, pCarbs:45, pFat:25, meals:4, coach:''
+  };
+}
+
+let clients = [blankClient('Client 1')];
+let activeIdx = 0;
+
+function renderTabs(){
+  const wrap = document.getElementById('clientTabs');
+  wrap.innerHTML = '';
+  clients.forEach((c,i)=>{
+    const tab = document.createElement('div');
+    tab.className = 'client-tab' + (i===activeIdx?' active':'');
+    tab.innerHTML = '<span>'+(c.name || 'Client '+(i+1))+'</span>' + (clients.length>1 ? '<span class="rm" data-i="'+i+'">×</span>' : '');
+    tab.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('rm')){
+        e.stopPropagation();
+        removeClient(parseInt(e.target.dataset.i));
+        return;
+      }
+      switchClient(i);
+    });
+    wrap.appendChild(tab);
+  });
+}
+
+function saveActiveToState(){
+  const c = clients[activeIdx];
+  c.name = document.getElementById('clientName').value.trim();
+  c.age = parseFloat(document.getElementById('age').value)||0;
+  c.weight = parseFloat(document.getElementById('weight').value)||0;
+  c.height = parseFloat(document.getElementById('height').value)||0;
+  c.bodyfat = document.getElementById('bodyfat').value;
+  c.activity = parseFloat(document.getElementById('activity').value);
+  c.pProtein = parseFloat(document.getElementById('pProtein').value)||0;
+  c.pCarbs = parseFloat(document.getElementById('pCarbs').value)||0;
+  c.pFat = parseFloat(document.getElementById('pFat').value)||0;
+  c.coach = document.getElementById('coachName').value.trim();
+}
+
+function loadStateFromActive(){
+  const c = clients[activeIdx];
+  document.getElementById('clientName').value = c.name;
+  document.getElementById('age').value = c.age;
+  document.getElementById('weight').value = c.weight;
+  document.getElementById('height').value = c.height;
+  document.getElementById('bodyfat').value = c.bodyfat;
+  document.getElementById('activity').value = c.activity;
+  document.getElementById('pProtein').value = c.pProtein;
+  document.getElementById('pCarbs').value = c.pCarbs;
+  document.getElementById('pFat').value = c.pFat;
+  document.getElementById('coachName').value = c.coach;
+
+  document.querySelectorAll('#genderSeg button').forEach(b=>b.classList.toggle('active', b.dataset.val===c.gender));
+  document.querySelectorAll('#goalSeg button').forEach(b=>b.classList.toggle('active', parseFloat(b.dataset.val)===c.goalMod));
+  document.querySelectorAll('#mealsSeg button').forEach(b=>b.classList.toggle('active', parseInt(b.dataset.val)===c.meals));
+}
+
+function switchClient(i){
+  saveActiveToState();
+  activeIdx = i;
+  loadStateFromActive();
+  renderTabs();
+  calc();
+}
+
+function addClient(){
+  saveActiveToState();
+  clients.push(blankClient('Client '+(clients.length+1)));
+  activeIdx = clients.length-1;
+  loadStateFromActive();
+  renderTabs();
+  calc();
+}
+
+function removeClient(i){
+  clients.splice(i,1);
+  if(activeIdx>=clients.length) activeIdx = clients.length-1;
+  loadStateFromActive();
+  renderTabs();
+  calc();
+}
+
+document.querySelectorAll('#genderSeg button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); clients[activeIdx].gender = b.dataset.val; calc();
+  };
+});
+document.querySelectorAll('#goalSeg button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#goalSeg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); clients[activeIdx].goalMod = parseFloat(b.dataset.val); calc();
+  };
+});
+document.querySelectorAll('#mealsSeg button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#mealsSeg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); clients[activeIdx].meals = parseInt(b.dataset.val); calc();
+  };
+});
+
+['age','weight','height','bodyfat','activity','pProtein','pCarbs','pFat','clientName','coachName'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{ saveActiveToState(); renderTabs(); calc(); });
+  document.getElementById(id).addEventListener('change', calc);
+});
+
+function setRing(el, circumference, fraction){
+  el.setAttribute('stroke-dasharray', circumference);
+  el.setAttribute('stroke-dashoffset', circumference * (1-fraction));
+}
+
+function bmiCategory(bmi){
+  if(bmi < 18.5) return 'Maigreur';
+  if(bmi < 25) return 'Normal';
+  if(bmi < 30) return 'Surpoids';
+  return 'Obésité';
+}
+
+function calc(){
+  const c = clients[activeIdx];
+  const age = parseFloat(document.getElementById('age').value)||0;
+  const weight = parseFloat(document.getElementById('weight').value)||0;
+  const height = parseFloat(document.getElementById('height').value)||0;
+  const bf = parseFloat(document.getElementById('bodyfat').value);
+  const activity = parseFloat(document.getElementById('activity').value);
+  const clientName = document.getElementById('clientName').value.trim();
+  const coachName = document.getElementById('coachName').value.trim();
+  const gender = c.gender;
+  const goalMod = c.goalMod;
+  const meals = c.meals;
+
+  let pP = parseFloat(document.getElementById('pProtein').value)||0;
+  let pC = parseFloat(document.getElementById('pCarbs').value)||0;
+  let pF = parseFloat(document.getElementById('pFat').value)||0;
+  const sum = pP+pC+pF;
+  const hint = document.getElementById('macroSumHint');
+  if(Math.abs(sum-100)<0.5){
+    hint.textContent = 'Total : 100% ✓'; hint.style.color = 'var(--indigo)';
+  } else {
+    hint.textContent = 'Total : '+sum.toFixed(0)+'% — doit être égal à 100%'; hint.style.color = 'var(--danger)';
+  }
+
+  setRing(document.getElementById('ringCarbs'), CIRC.carbs, Math.min(pC,100)/100);
+  setRing(document.getElementById('ringProtein'), CIRC.protein, Math.min(pP,100)/100);
+  setRing(document.getElementById('ringFat'), CIRC.fat, Math.min(pF,100)/100);
+
+  document.getElementById('slipClient').textContent = clientName || 'Nouveau client';
+  document.getElementById('slipCoach').textContent = coachName ? ('Suivi par : '+coachName) : 'Suivi par : —';
+  const today = new Date();
+  document.getElementById('slipDate').textContent = today.toLocaleDateString('fr-FR', {year:'numeric',month:'2-digit',day:'2-digit'});
+
+  if(!weight || !height || !age){ return; }
+
+  let bmr;
+  if(bf && bf>0){
+    const leanMass = weight * (1 - bf/100);
+    bmr = 370 + (21.6 * leanMass);
+  } else if(gender==='male'){
+    bmr = 10*weight + 6.25*height - 5*age + 5;
+  } else {
+    bmr = 10*weight + 6.25*height - 5*age - 161;
+  }
+
+  const tdee = bmr * activity;
+  const target = tdee * (1 + goalMod);
+  const delta = target - tdee;
+  const bmi = weight / Math.pow(height/100, 2);
+
+  document.getElementById('outBMR').textContent = Math.round(bmr).toLocaleString('fr-FR');
+  document.getElementById('outTDEE').textContent = Math.round(tdee).toLocaleString('fr-FR');
+  document.getElementById('outDelta').textContent = (delta>=0?'+':'') + Math.round(delta).toLocaleString('fr-FR');
+  document.getElementById('outBMI').textContent = bmi.toFixed(1);
+  document.getElementById('outCalories').textContent = Math.round(target).toLocaleString('fr-FR');
+
+  let goalText = 'Maintien du poids';
+  if(goalMod < 0) goalText = 'Sèche — déficit calorique';
+  if(goalMod > 0) goalText = 'Prise de masse — surplus calorique';
+  document.getElementById('outGoalLabel').textContent = goalText + ' · IMC : ' + bmiCategory(bmi);
+
+  const protG = Math.round((target * pP/100)/4);
+  const carbG = Math.round((target * pC/100)/4);
+  const fatG  = Math.round((target * pF/100)/9);
+
+  document.getElementById('gProtein').textContent = protG+'g';
+  document.getElementById('gCarbs').textContent = carbG+'g';
+  document.getElementById('gFat').textContent = fatG+'g';
+  document.getElementById('pctProtein').textContent = pP+'%';
+  document.getElementById('pctCarbs').textContent = pC+'%';
+  document.getElementById('pctFat').textContent = pF+'%';
+
+  const water = (weight * 0.045).toFixed(1);
+  document.getElementById('outWater').textContent = water + ' L/jour';
+  const fiber = Math.round(target / 1000 * 14);
+  document.getElementById('outFiber').textContent = fiber + ' g/jour';
+
+  const mealCard = document.getElementById('mealCard');
+  mealCard.innerHTML = '';
+  for(let i=1;i<=meals;i++){
+    const row = document.createElement('div');
+    row.className = 'meal-item';
+    row.innerHTML = '<span class="mname">Repas '+i+'</span><span class="mvals">'+
+      '<span>P '+Math.round(protG/meals)+'g</span>'+
+      '<span>G '+Math.round(carbG/meals)+'g</span>'+
+      '<span>L '+Math.round(fatG/meals)+'g</span>'+
+      '<span>'+Math.round(target/meals)+' kcal</span></span>';
+    mealCard.appendChild(row);
+  }
+}
+
+function copyPlan(){
+  const client = document.getElementById('clientName').value.trim() || 'Client';
+  const coach = document.getElementById('coachName').value.trim();
+  const cal = document.getElementById('outCalories').textContent;
+  const goal = document.getElementById('outGoalLabel').textContent;
+  const p = document.getElementById('gProtein').textContent;
+  const c = document.getElementById('gCarbs').textContent;
+  const f = document.getElementById('gFat').textContent;
+  const water = document.getElementById('outWater').textContent;
+  const fiber = document.getElementById('outFiber').textContent;
+  const bmi = document.getElementById('outBMI').textContent;
+
+  const text =
+`FORMA — Plan nutritionnel — ${client}
+${coach ? 'Suivi par : '+coach : ''}
+———————————————
+Calories journalières : ${cal} kcal
+Objectif : ${goal}
+IMC : ${bmi}
+
+Protéines : ${p}
+Glucides : ${c}
+Lipides : ${f}
+
+Eau recommandée : ${water}
+Fibres recommandées : ${fiber}
+———————————————
+Estimation, ne remplace pas l'avis d'un professionnel`;
+
+  navigator.clipboard.writeText(text).then(()=>{
+    const msg = document.getElementById('copiedMsg');
+    msg.textContent = 'Copié ✓ prêt à coller dans WhatsApp';
+    setTimeout(()=>{ msg.textContent=''; }, 3000);
+  });
+}
+
+renderTabs();
+loadStateFromActive();
+calc();
+</script>
+</body>
+</html>
