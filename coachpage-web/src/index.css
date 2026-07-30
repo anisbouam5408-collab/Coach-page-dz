@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Cairo", "Tajawal", ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: #f7f8f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f3ef;
+  --color-border: #e5e7e0;
+  --color-border-strong: #d3d6cc;
+  --color-ink: #14171a;
+  --color-ink-muted: #5b6058;
+  --color-ink-faint: #8b9088;
+
+  --color-brand-50: #eefbf3;
+  --color-brand-100: #d5f5e2;
+  --color-brand-400: #35c281;
+  --color-brand-500: #18a869;
+  --color-brand-600: #128a56;
+  --color-brand-700: #0f6d45;
+
+  --color-amber-400: #f5a524;
+  --color-rose-500: #e63946;
+  --color-sky-500: #2f8fd6;
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-brand-500) 25%, transparent);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.14);
+    border-radius: 999px;
+    border: 2px solid var(--color-canvas);
+  }
+}
+
+@layer components {
+  .card-surface {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 2px rgba(20, 23, 26, 0.04), 0 8px 24px -12px rgba(20, 23, 26, 0.08);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(120deg, var(--color-brand-600) 10%, var(--color-brand-400) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
