@@ -27,10 +27,13 @@ export interface Coach {
   registered_at: string;
 }
 
+export type ClientStatus = "ACTIVE" | "PAUSED" | "EXPIRED";
+
 export interface Client {
   id: number;
   coach_id: number;
   full_name: string;
+  email: string | null;
   age: number | null;
   weight: number | null;
   height: number | null;
@@ -39,6 +42,13 @@ export interface Client {
   fitness_goal: string | null;
   training_program: string | null;
   phone_number: string | null;
+  medical_conditions: string | null;
+  allergies: string | null;
+  injuries: string | null;
+  status: ClientStatus;
+  subscription_started_at: string | null;
+  subscription_expires_at: string | null;
+  tags: string[];
   coach_notes: string | null;
   active_status: boolean;
   access_code: string;

@@ -1,26 +1,86 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, LogOut, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { Dumbbell, LogOut, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
 import { usePlans } from "@/hooks/usePlans";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import { buildRenewWhatsAppLink } from "@/lib/whatsapp";
-import type { Client } from "@/types/domain";
+import type { Client, ClientStatus } from "@/types/domain";
+
+const STATUS_TONE: Record<ClientStatus, "brand" | "amber" | "rose"> = {
+  ACTIVE: "brand",
+  PAUSED: "amber",
+  EXPIRED: "rose",
+};
+const STATUS_LABEL: Record<ClientStatus, string> = {
+  ACTIVE: "نشط",
+  PAUSED: "متوقف",
+  EXPIRED: "منتهي",
+};
+const STATUS_FILTERS: Array<{ value: ClientStatus | "ALL"; label: string }> = [
+  { value: "ALL", label: "كل الحالات" },
+  { value: "ACTIVE", label: "نشط" },
+  { value: "PAUSED", label: "متوقف" },
+  { value: "EXPIRED", label: "منتهي" },
+];
 
 interface ClientFormState {
   id: number | null;
   full_name: string;
+  phone_number: string;
+  email: string;
+  age: string;
+  gender: "male" | "female";
+  height: string;
   weight: string;
   fitness_goal: string;
+  activity_level: string;
   training_program: string;
+  medical_conditions: string;
+  allergies: string;
+  injuries: string;
+  status: ClientStatus;
+  subscription_started_at: string;
+  subscription_expires_at: string;
+  tags: string;
+  coach_notes: string;
 }
 
-const EMPTY_FORM: ClientFormState = { id: null, full_name: "", weight: "", fitness_goal: "", training_program: "" };
+const EMPTY_FORM: ClientFormState = {
+  id: null,
+  full_name: "",
+  phone_number: "",
+  email: "",
+  age: "",
+  gender: "male",
+  height: "",
+  weight: "",
+  fitness_goal: "",
+  activity_level: "moderate",
+  training_program: "",
+  medical_conditions: "",
+  allergies: "",
+  injuries: "",
+  status: "ACTIVE",
+  subscription_started_at: "",
+  subscription_expires_at: "",
+  tags: "",
+  coach_notes: "",
+};
+
+const ACTIVITY_LEVELS: Array<{ value: string; label: string }> = [
+  { value: "sedentary", label: "خامل" },
+  { value: "light", label: "نشاط خفيف" },
+  { value: "moderate", label: "نشاط متوسط" },
+  { value: "active", label: "نشيط" },
+  { value: "very_active", label: "نشيط جداً" },
+];
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -33,6 +93,8 @@ export function DashboardPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ClientStatus | "ALL">("ALL");
   const plansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,6 +115,20 @@ export function DashboardPage() {
         setLoadingClients(false);
       });
   }, [coach]);
+
+  const filteredClients = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return clients.filter((c) => {
+      if (statusFilter !== "ALL" && c.status !== statusFilter) return false;
+      if (!term) return true;
+      return (
+        c.full_name?.toLowerCase().includes(term) ||
+        c.phone_number?.toLowerCase().includes(term) ||
+        c.email?.toLowerCase().includes(term) ||
+        c.tags?.some((t) => t.toLowerCase().includes(term))
+      );
+    });
+  }, [clients, search, statusFilter]);
 
   if (!coach) {
     return (
@@ -95,9 +171,26 @@ export function DashboardPage() {
     const payload = {
       coach_id: coach!.id,
       full_name: form.full_name.trim(),
+      phone_number: form.phone_number.trim() || null,
+      email: form.email.trim() || null,
+      age: form.age ? Number(form.age) : null,
+      gender: form.gender,
+      height: form.height ? Number(form.height) : null,
       weight: form.weight ? Number(form.weight) : null,
       fitness_goal: form.fitness_goal.trim() || null,
+      activity_level: form.activity_level,
       training_program: form.training_program.trim() || null,
+      medical_conditions: form.medical_conditions.trim() || null,
+      allergies: form.allergies.trim() || null,
+      injuries: form.injuries.trim() || null,
+      status: form.status,
+      subscription_started_at: form.subscription_started_at || null,
+      subscription_expires_at: form.subscription_expires_at || null,
+      tags: form.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      coach_notes: form.coach_notes.trim() || null,
     };
 
     const { error } = form.id
@@ -122,9 +215,23 @@ export function DashboardPage() {
     setForm({
       id: client.id,
       full_name: client.full_name,
+      phone_number: client.phone_number ?? "",
+      email: client.email ?? "",
+      age: client.age?.toString() ?? "",
+      gender: client.gender,
+      height: client.height?.toString() ?? "",
       weight: client.weight?.toString() ?? "",
       fitness_goal: client.fitness_goal ?? "",
+      activity_level: client.activity_level || "moderate",
       training_program: client.training_program ?? "",
+      medical_conditions: client.medical_conditions ?? "",
+      allergies: client.allergies ?? "",
+      injuries: client.injuries ?? "",
+      status: client.status,
+      subscription_started_at: client.subscription_started_at ?? "",
+      subscription_expires_at: client.subscription_expires_at ?? "",
+      tags: (client.tags ?? []).join(", "),
+      coach_notes: client.coach_notes ?? "",
     });
     setFormOpen(true);
   }
@@ -164,7 +271,7 @@ export function DashboardPage() {
                 <Users className="size-5 text-brand-500" />
                 عملاؤك ({clients.length})
               </CardTitle>
-              <CardDescription>أضف عملاءك وتابع أوزانهم وأهدافهم وبرامجهم التدريبية.</CardDescription>
+              <CardDescription>أضف عملاءك وتابع ملفهم الصحي وأوزانهم وأهدافهم وبرامجهم.</CardDescription>
             </div>
             <Button
               size="sm"
@@ -183,6 +290,29 @@ export function DashboardPage() {
             </Button>
           </CardHeader>
 
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint" />
+              <Input
+                placeholder="ابحث بالاسم، الهاتف، البريد أو الوسم"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pe-9"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ClientStatus | "ALL")}
+              className="h-11 rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+            >
+              {STATUS_FILTERS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {formOpen && (
             <div className="mb-6 grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-muted p-4 sm:grid-cols-2">
               <div>
@@ -190,8 +320,67 @@ export function DashboardPage() {
                 <Input id="c_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
               </div>
               <div>
+                <Label htmlFor="c_phone">الهاتف</Label>
+                <Input
+                  id="c_phone"
+                  dir="ltr"
+                  value={form.phone_number}
+                  onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_email">البريد الإلكتروني</Label>
+                <Input
+                  id="c_email"
+                  type="email"
+                  dir="ltr"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_age">العمر</Label>
+                <Input id="c_age" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="c_gender">الجنس</Label>
+                <select
+                  id="c_gender"
+                  value={form.gender}
+                  onChange={(e) => setForm({ ...form, gender: e.target.value as "male" | "female" })}
+                  className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                >
+                  <option value="male">ذكر</option>
+                  <option value="female">أنثى</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="c_height">الطول (سم)</Label>
+                <Input
+                  id="c_height"
+                  type="number"
+                  value={form.height}
+                  onChange={(e) => setForm({ ...form, height: e.target.value })}
+                />
+              </div>
+              <div>
                 <Label htmlFor="c_weight">الوزن (كغ)</Label>
                 <Input id="c_weight" type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="c_activity">مستوى النشاط</Label>
+                <select
+                  id="c_activity"
+                  value={form.activity_level}
+                  onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
+                  className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                >
+                  {ACTIVITY_LEVELS.map((a) => (
+                    <option key={a.value} value={a.value}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label htmlFor="c_goal">الهدف</Label>
@@ -203,6 +392,75 @@ export function DashboardPage() {
                   id="c_program"
                   value={form.training_program}
                   onChange={(e) => setForm({ ...form, training_program: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_status">حالة العميل</Label>
+                <select
+                  id="c_status"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as ClientStatus })}
+                  className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                >
+                  <option value="ACTIVE">نشط</option>
+                  <option value="PAUSED">متوقف</option>
+                  <option value="EXPIRED">منتهي</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="c_tags">الوسوم (Tags) — افصل بفاصلة</Label>
+                <Input id="c_tags" dir="ltr" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="c_sub_start">تاريخ بدء الاشتراك</Label>
+                <Input
+                  id="c_sub_start"
+                  type="date"
+                  value={form.subscription_started_at}
+                  onChange={(e) => setForm({ ...form, subscription_started_at: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_sub_end">تاريخ انتهاء الاشتراك</Label>
+                <Input
+                  id="c_sub_end"
+                  type="date"
+                  value={form.subscription_expires_at}
+                  onChange={(e) => setForm({ ...form, subscription_expires_at: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_medical">الأمراض</Label>
+                <Input
+                  id="c_medical"
+                  value={form.medical_conditions}
+                  onChange={(e) => setForm({ ...form, medical_conditions: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_allergies">الحساسية</Label>
+                <Input
+                  id="c_allergies"
+                  value={form.allergies}
+                  onChange={(e) => setForm({ ...form, allergies: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="c_injuries">الإصابات</Label>
+                <Input
+                  id="c_injuries"
+                  value={form.injuries}
+                  onChange={(e) => setForm({ ...form, injuries: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="c_notes">ملاحظات المدرب</Label>
+                <textarea
+                  id="c_notes"
+                  value={form.coach_notes}
+                  onChange={(e) => setForm({ ...form, coach_notes: e.target.value })}
+                  rows={3}
+                  className="w-full rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
                 />
               </div>
               {clientError && (
@@ -225,27 +483,48 @@ export function DashboardPage() {
 
           {loadingClients ? (
             <p className="py-8 text-center text-sm text-ink-faint">جارٍ التحميل...</p>
-          ) : clients.length === 0 ? (
-            <p className="py-8 text-center text-sm text-ink-faint">لا يوجد عملاء بعد — أضف أول عميل لك.</p>
+          ) : filteredClients.length === 0 ? (
+            <p className="py-8 text-center text-sm text-ink-faint">
+              {clients.length === 0 ? "لا يوجد عملاء بعد — أضف أول عميل لك." : "لا توجد نتائج مطابقة."}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-right text-sm">
                 <thead>
                   <tr className="border-b border-border text-ink-faint">
                     <th className="py-2 font-medium">الاسم</th>
-                    <th className="py-2 font-medium">الوزن</th>
+                    <th className="py-2 font-medium">الهاتف</th>
+                    <th className="py-2 font-medium">الحالة</th>
                     <th className="py-2 font-medium">الهدف</th>
-                    <th className="py-2 font-medium">البرنامج</th>
+                    <th className="py-2 font-medium">تاريخ الانتهاء</th>
                     <th className="py-2 font-medium"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {clients.map((c) => (
+                  {filteredClients.map((c) => (
                     <tr key={c.id} className="border-b border-border last:border-0">
-                      <td className="py-3 font-medium text-ink">{c.full_name}</td>
-                      <td className="py-3 text-ink-muted">{c.weight ? `${c.weight} كغ` : "—"}</td>
+                      <td className="py-3 font-medium text-ink">
+                        {c.full_name}
+                        {c.tags?.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {c.tags.map((t) => (
+                              <Badge key={t} tone="neutral" className="text-[10px]">
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 text-ink-muted" dir="ltr">
+                        {c.phone_number || "—"}
+                      </td>
+                      <td className="py-3">
+                        <Badge tone={STATUS_TONE[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+                      </td>
                       <td className="py-3 text-ink-muted">{c.fitness_goal || "—"}</td>
-                      <td className="py-3 text-ink-muted">{c.training_program || "—"}</td>
+                      <td className="py-3 text-ink-muted">
+                        {c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString("ar-DZ") : "—"}
+                      </td>
                       <td className="py-3">
                         <div className="flex justify-end gap-1.5">
                           <Button variant="ghost" size="sm" onClick={() => startEdit(c)}>
