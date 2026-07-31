@@ -19,6 +19,62 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  async function createCoachRow(userId: string) {
+    const { error: insertError } = await supabase.from("coaches").insert({
+      user_id: userId,
+      username,
+      full_name: fullName,
+      email,
+      phone_number: phone,
+      subscription_status: "TRIAL",
+      password_hash: crypto.randomUUID(),
+    });
+    return insertError;
+  }
+
+  async function handleVerifyOtp(e: FormEvent) {
+    e.preventDefault();
+    setOtpError(null);
+    setVerifying(true);
+
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      email,
+      token: otp.trim(),
+      type: "signup",
+    });
+
+    if (verifyError || !data.session || !data.user) {
+      setOtpError("الرمز غير صحيح أو منتهي الصلاحية. تحقق من الرقم أو اطلب رمزاً جديداً.");
+      setVerifying(false);
+      return;
+    }
+
+    const insertError = await createCoachRow(data.user.id);
+    if (insertError && !insertError.message.includes("duplicate key")) {
+      setOtpError(insertError.message);
+      setVerifying(false);
+      return;
+    }
+
+    await refreshCoach();
+    navigate("/dashboard");
+  }
+
+  async function handleResendOtp() {
+    setOtpError(null);
+    setResent(false);
+    const { error: resendError } = await supabase.auth.resend({ type: "signup", email });
+    if (resendError) {
+      setOtpError(resendError.message);
+      return;
+    }
+    setResent(true);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -55,16 +111,7 @@ export function RegisterPage() {
       return;
     }
 
-    const { error: insertError } = await supabase.from("coaches").insert({
-      user_id: data.user.id,
-      username,
-      full_name: fullName,
-      email,
-      phone_number: phone,
-      subscription_status: "TRIAL",
-      password_hash: crypto.randomUUID(),
-    });
-
+    const insertError = await createCoachRow(data.user.id);
     if (insertError) {
       setError(insertError.message.includes("duplicate") ? "اسم المستخدم مستخدم مسبقاً." : insertError.message);
       setLoading(false);
@@ -78,14 +125,39 @@ export function RegisterPage() {
   if (pendingConfirmation) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-canvas px-6">
-        <Card className="max-w-md text-center">
-          <h1 className="text-xl font-bold text-ink">تحقق من بريدك الإلكتروني</h1>
+        <Card className="w-full max-w-md text-center">
+          <h1 className="text-xl font-bold text-ink">أدخل رمز التأكيد</h1>
           <p className="mt-2 text-sm text-ink-muted">
-            أرسلنا رابط تأكيد إلى {email}. بعد التأكيد، سجّل الدخول لإكمال إعداد حسابك.
+            أرسلنا رمزاً مكوّناً من 6 أرقام إلى {email}. أدخله هنا لتفعيل حسابك مباشرة.
           </p>
-          <Link to="/login" className="mt-6 block">
-            <Button className="w-full">الذهاب لتسجيل الدخول</Button>
-          </Link>
+
+          <form onSubmit={handleVerifyOtp} className="mt-6 flex flex-col gap-4 text-right">
+            <div>
+              <Label htmlFor="otp">رمز التأكيد</Label>
+              <Input
+                id="otp"
+                dir="ltr"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                className="text-center text-lg tracking-[0.5em]"
+              />
+            </div>
+
+            {otpError && <p className="text-sm font-medium text-rose-600">{otpError}</p>}
+            {resent && <p className="text-sm font-medium text-brand-600">تم إرسال رمز جديد إلى بريدك.</p>}
+
+            <Button type="submit" disabled={verifying}>
+              {verifying && <Loader2 className="size-4 animate-spin" />}
+              تأكيد الحساب
+            </Button>
+            <Button type="button" variant="ghost" onClick={handleResendOtp}>
+              إعادة إرسال الرمز
+            </Button>
+          </form>
         </Card>
       </div>
     );
