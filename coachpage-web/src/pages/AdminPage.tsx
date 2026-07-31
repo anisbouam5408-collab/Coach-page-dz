@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Search, ShieldCheck, Trash2, Users } from "lucide-react";
+import { LogOut, Plus, Search, ShieldCheck, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -45,6 +45,14 @@ export function AdminPage() {
 
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const [addCoachOpen, setAddCoachOpen] = useState(false);
+  const [addCoachForm, setAddCoachForm] = useState({ full_name: "", username: "", email: "", phone: "" });
+  const [creatingCoach, setCreatingCoach] = useState(false);
+  const [addCoachError, setAddCoachError] = useState<string | null>(null);
+  const [createdCoachCredentials, setCreatedCoachCredentials] = useState<{ email: string; password: string } | null>(
+    null,
+  );
 
   async function loadCoaches() {
     const { data } = await supabase
@@ -110,6 +118,34 @@ export function AdminPage() {
     await loadCoaches();
   }
 
+  async function handleCreateCoach() {
+    if (!addCoachForm.full_name.trim() || !addCoachForm.username.trim() || !addCoachForm.email.trim()) {
+      setAddCoachError("الرجاء تعبئة الاسم الكامل، اسم المستخدم، والبريد الإلكتروني.");
+      return;
+    }
+    setCreatingCoach(true);
+    setAddCoachError(null);
+    const { data, error } = await supabase.functions.invoke("admin-create-coach", {
+      body: {
+        full_name: addCoachForm.full_name.trim(),
+        username: addCoachForm.username.trim(),
+        email: addCoachForm.email.trim(),
+        phone: addCoachForm.phone.trim(),
+      },
+    });
+    setCreatingCoach(false);
+
+    if (error || data?.error) {
+      setAddCoachError(data?.error ?? error?.message ?? "تعذّر إنشاء الحساب.");
+      return;
+    }
+
+    setCreatedCoachCredentials({ email: data.email, password: data.password });
+    setAddCoachForm({ full_name: "", username: "", email: "", phone: "" });
+    setAddCoachOpen(false);
+    await loadCoaches();
+  }
+
   async function handleSaveSettings() {
     if (!settings) return;
     setSavingSettings(true);
@@ -162,6 +198,26 @@ export function AdminPage() {
           ))}
         </div>
 
+        {createdCoachCredentials && (
+          <Card className="mb-6 border-2 border-brand-500">
+            <CardTitle>تم إنشاء حساب المدرب بنجاح</CardTitle>
+            <CardDescription className="mb-3">
+              انسخ هذه المعلومات وأرسلها للمدرب عبر واتساب — لن تظهر كلمة المرور مرة أخرى.
+            </CardDescription>
+            <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface-muted p-4 text-sm" dir="ltr">
+              <p>
+                <span className="font-semibold">Email:</span> {createdCoachCredentials.email}
+              </p>
+              <p>
+                <span className="font-semibold">Password:</span> {createdCoachCredentials.password}
+              </p>
+            </div>
+            <Button className="mt-3" size="sm" variant="ghost" onClick={() => setCreatedCoachCredentials(null)}>
+              إغلاق
+            </Button>
+          </Card>
+        )}
+
         <Card>
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -169,6 +225,16 @@ export function AdminPage() {
               <CardDescription>إدارة حسابات واشتراكات المدربين على المنصة.</CardDescription>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setAddCoachError(null);
+                  setAddCoachOpen((v) => !v);
+                }}
+              >
+                <Plus className="size-4" />
+                إضافة مدرب
+              </Button>
               <div className="relative">
                 <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint" />
                 <Input
@@ -191,6 +257,58 @@ export function AdminPage() {
               </select>
             </div>
           </div>
+
+          {addCoachOpen && (
+            <div className="mb-6 grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-muted p-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="ac_name">الاسم الكامل</Label>
+                <Input
+                  id="ac_name"
+                  value={addCoachForm.full_name}
+                  onChange={(e) => setAddCoachForm({ ...addCoachForm, full_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ac_username">اسم المستخدم</Label>
+                <Input
+                  id="ac_username"
+                  dir="ltr"
+                  value={addCoachForm.username}
+                  onChange={(e) => setAddCoachForm({ ...addCoachForm, username: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ac_email">البريد الإلكتروني</Label>
+                <Input
+                  id="ac_email"
+                  dir="ltr"
+                  type="email"
+                  value={addCoachForm.email}
+                  onChange={(e) => setAddCoachForm({ ...addCoachForm, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ac_phone">رقم الهاتف (اختياري)</Label>
+                <Input
+                  id="ac_phone"
+                  dir="ltr"
+                  value={addCoachForm.phone}
+                  onChange={(e) => setAddCoachForm({ ...addCoachForm, phone: e.target.value })}
+                />
+              </div>
+              {addCoachError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 sm:col-span-2">{addCoachError}</p>
+              )}
+              <div className="flex items-end gap-2 sm:col-span-2">
+                <Button onClick={handleCreateCoach} disabled={creatingCoach}>
+                  {creatingCoach ? "جارٍ الإنشاء..." : "إنشاء الحساب وتوليد كلمة مرور"}
+                </Button>
+                <Button variant="ghost" onClick={() => setAddCoachOpen(false)}>
+                  إلغاء
+                </Button>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <p className="py-8 text-center text-sm text-ink-faint">جارٍ التحميل...</p>

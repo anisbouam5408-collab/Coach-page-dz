@@ -32,6 +32,7 @@ export function DashboardPage() {
   const [form, setForm] = useState<ClientFormState>(EMPTY_FORM);
   const [formOpen, setFormOpen] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
+  const [clientError, setClientError] = useState<string | null>(null);
   const plansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,6 +91,7 @@ export function DashboardPage() {
 
   async function handleSaveClient() {
     if (!form.full_name.trim()) return;
+    setClientError(null);
     const payload = {
       coach_id: coach!.id,
       full_name: form.full_name.trim(),
@@ -98,10 +100,13 @@ export function DashboardPage() {
       training_program: form.training_program.trim() || null,
     };
 
-    if (form.id) {
-      await supabase.from("clients").update(payload).eq("id", form.id);
-    } else {
-      await supabase.from("clients").insert(payload);
+    const { error } = form.id
+      ? await supabase.from("clients").update(payload).eq("id", form.id)
+      : await supabase.from("clients").insert(payload);
+
+    if (error) {
+      setClientError(error.message);
+      return;
     }
     setForm(EMPTY_FORM);
     setFormOpen(false);
@@ -161,7 +166,18 @@ export function DashboardPage() {
               </CardTitle>
               <CardDescription>أضف عملاءك وتابع أوزانهم وأهدافهم وبرامجهم التدريبية.</CardDescription>
             </div>
-            <Button size="sm" onClick={() => (formOpen ? setFormOpen(false) : (setForm(EMPTY_FORM), setFormOpen(true)))}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setClientError(null);
+                if (formOpen) {
+                  setFormOpen(false);
+                } else {
+                  setForm(EMPTY_FORM);
+                  setFormOpen(true);
+                }
+              }}
+            >
               <Plus className="size-4" />
               عميل جديد
             </Button>
@@ -189,9 +205,18 @@ export function DashboardPage() {
                   onChange={(e) => setForm({ ...form, training_program: e.target.value })}
                 />
               </div>
+              {clientError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 sm:col-span-2">{clientError}</p>
+              )}
               <div className="flex items-end gap-2 sm:col-span-2">
                 <Button onClick={handleSaveClient}>{form.id ? "حفظ التعديلات" : "إضافة العميل"}</Button>
-                <Button variant="ghost" onClick={() => setFormOpen(false)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setClientError(null);
+                    setFormOpen(false);
+                  }}
+                >
                   إلغاء
                 </Button>
               </div>
