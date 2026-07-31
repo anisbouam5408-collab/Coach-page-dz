@@ -53,6 +53,7 @@ export function AdminPage() {
   const [createdCoachCredentials, setCreatedCoachCredentials] = useState<{ email: string; password: string } | null>(
     null,
   );
+  const [resettingPasswordId, setResettingPasswordId] = useState<number | null>(null);
 
   async function loadCoaches() {
     const { data } = await supabase
@@ -146,6 +147,20 @@ export function AdminPage() {
     await loadCoaches();
   }
 
+  async function handleResetPassword(coachId: number) {
+    setResettingPasswordId(coachId);
+    const { data, error } = await supabase.functions.invoke("admin-reset-coach-password", {
+      body: { coach_id: coachId },
+    });
+    setResettingPasswordId(null);
+
+    if (error || data?.error) {
+      setAddCoachError(data?.error ?? error?.message ?? "تعذّر تغيير كلمة المرور.");
+      return;
+    }
+    setCreatedCoachCredentials({ email: data.email, password: data.password });
+  }
+
   async function handleSaveSettings() {
     if (!settings) return;
     setSavingSettings(true);
@@ -200,7 +215,7 @@ export function AdminPage() {
 
         {createdCoachCredentials && (
           <Card className="mb-6 border-2 border-brand-500">
-            <CardTitle>تم إنشاء حساب المدرب بنجاح</CardTitle>
+            <CardTitle>بيانات دخول المدرب</CardTitle>
             <CardDescription className="mb-3">
               انسخ هذه المعلومات وأرسلها للمدرب عبر واتساب — لن تظهر كلمة المرور مرة أخرى.
             </CardDescription>
@@ -378,6 +393,14 @@ export function AdminPage() {
                               </Button>
                               <Button size="sm" variant="destructive" onClick={() => handleSuspend(c.id)}>
                                 تجميد
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => handleResetPassword(c.id)}
+                                disabled={resettingPasswordId === c.id}
+                              >
+                                {resettingPasswordId === c.id ? "جارٍ التغيير..." : "تغيير كلمة المرور"}
                               </Button>
                               <Button size="sm" variant="ghost" onClick={() => setConfirmingDeleteId(c.id)}>
                                 <Trash2 className="size-3.5 text-rose-500" />
