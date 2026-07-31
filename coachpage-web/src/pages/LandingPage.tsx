@@ -126,7 +126,15 @@ export function LandingPage() {
       </main>
 
       <footer className="border-t border-border px-6 py-8 text-center text-sm text-ink-faint">
-        © {new Date().getFullYear()} CoachPage DZ — منصة إدارة أعمال المدربين في الجزائر
+        <p>© {new Date().getFullYear()} CoachPage DZ — منصة إدارة أعمال المدربين في الجزائر</p>
+        <div className="mt-2 flex items-center justify-center gap-4">
+          <Link to="/terms" className="hover:text-ink hover:underline">
+            شروط الاستخدام
+          </Link>
+          <Link to="/privacy" className="hover:text-ink hover:underline">
+            سياسة الخصوصية
+          </Link>
+        </div>
       </footer>
     </div>
   );
