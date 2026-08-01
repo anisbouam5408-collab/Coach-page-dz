@@ -1,6 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowRight, Camera, Loader2, Plus, Trash2, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  Camera,
+  ChevronDown,
+  Dumbbell,
+  Eye,
+  FileText,
+  Heart,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Ruler,
+  Save,
+  Share2,
+  Target,
+  Trash2,
+  TrendingUp,
+  User,
+  Utensils,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -9,6 +30,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
 import type {
   Client,
+  ClientStatus,
   Coach,
   Exercise,
   MeasurementLog,
@@ -22,6 +44,31 @@ import type {
 
 type DayWithExercises = TrainingDay & { training_exercises: TrainingExercise[] };
 
+const ACTIVITY_LEVELS: Array<{ value: string; label: string }> = [
+  { value: "sedentary", label: "خامل" },
+  { value: "light", label: "نشاط خفيف" },
+  { value: "moderate", label: "نشاط متوسط" },
+  { value: "active", label: "نشيط" },
+  { value: "very_active", label: "نشيط جداً" },
+];
+
+const STATUS_TONE: Record<ClientStatus, "brand" | "amber" | "rose"> = {
+  ACTIVE: "brand",
+  PAUSED: "amber",
+  EXPIRED: "rose",
+};
+const STATUS_LABEL: Record<ClientStatus, string> = {
+  ACTIVE: "نشط",
+  PAUSED: "متوقف",
+  EXPIRED: "منتهي",
+};
+
+function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const diffMs = new Date(dateStr).getTime() - Date.now();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
 export function ClientDetailPage() {
   const { id } = useParams();
   const { coach } = useAuthStore();
@@ -31,18 +78,73 @@ export function ClientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"overview" | "training" | "progress">("overview");
 
+  const [latestWeight, setLatestWeight] = useState<number | null>(null);
+  const [recentLogCount, setRecentLogCount] = useState(0);
+
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [renewSaving, setRenewSaving] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  async function loadClient() {
+    const { data } = await supabase.from("clients").select("*").eq("id", clientId).maybeSingle();
+    setClient(data as Client | null);
+    setLoading(false);
+  }
+
   useEffect(() => {
     if (!coach || !clientId) return;
-    supabase
-      .from("clients")
-      .select("*")
-      .eq("id", clientId)
-      .maybeSingle()
-      .then(({ data }) => {
-        setClient(data as Client | null);
-        setLoading(false);
-      });
+    void loadClient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coach, clientId]);
+
+  useEffect(() => {
+    if (!client) return;
+    const since = new Date();
+    since.setDate(since.getDate() - 28);
+    supabase
+      .from("weight_logs")
+      .select("weight, date")
+      .eq("client_id", client.id)
+      .order("date", { ascending: false })
+      .then(({ data }) => {
+        const logs = (data as { weight: number; date: string }[]) ?? [];
+        setLatestWeight(logs[0]?.weight ?? client.weight ?? null);
+        setRecentLogCount(logs.filter((l) => new Date(l.date) >= since).length);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client?.id]);
+
+  const remainingDays = client ? daysUntil(client.subscription_expires_at) : null;
+  const adherencePct = Math.min(100, Math.round((recentLogCount / 4) * 100));
+
+  async function handleRenew(days: number) {
+    if (!client) return;
+    setRenewSaving(true);
+    const base =
+      remainingDays !== null && remainingDays > 0 && client.subscription_expires_at
+        ? new Date(client.subscription_expires_at)
+        : new Date();
+    base.setDate(base.getDate() + days);
+    await supabase
+      .from("clients")
+      .update({ subscription_expires_at: base.toISOString().slice(0, 10), status: "ACTIVE" })
+      .eq("id", client.id);
+    await loadClient();
+    setRenewSaving(false);
+    setRenewOpen(false);
+  }
+
+  function handleSendLink() {
+    if (!client) return;
+    const text = `مرحباً ${client.full_name}، هذا كود الوصول الخاص بك في CoachPage DZ: ${client.access_code}`;
+    if (client.phone_number) {
+      window.open(`https://wa.me/${client.phone_number.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`, "_blank");
+    } else {
+      void navigator.clipboard.writeText(text);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  }
 
   if (!coach || loading) {
     return <div className="flex min-h-svh items-center justify-center text-ink-muted">جارٍ التحميل...</div>;
@@ -76,7 +178,38 @@ export function ClientDetailPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-6 py-6">
+        <SummaryCard client={client} latestWeight={latestWeight} remainingDays={remainingDays} adherencePct={adherencePct} />
+
+        <QuickActions
+          onRecordWeight={() => setTab("progress")}
+          onRenew={() => setRenewOpen((v) => !v)}
+          onSendLink={handleSendLink}
+          onGenerateWorkout={() => setTab("training")}
+          onViewProgress={() => setTab("progress")}
+          linkCopied={linkCopied}
+        />
+
+        {renewOpen && (
+          <Card className="mb-6 border-2 border-brand-500">
+            <CardTitle className="mb-3">تجديد الاشتراك</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => handleRenew(30)} disabled={renewSaving}>
+                {renewSaving && <Loader2 className="size-4 animate-spin" />}+ 30 يوم
+              </Button>
+              <Button size="sm" onClick={() => handleRenew(90)} disabled={renewSaving}>
+                + 90 يوم
+              </Button>
+              <Button size="sm" onClick={() => handleRenew(150)} disabled={renewSaving}>
+                + 150 يوم
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setRenewOpen(false)}>
+                إلغاء
+              </Button>
+            </div>
+          </Card>
+        )}
+
         <div className="mb-6 flex gap-2 border-b border-border">
           {(
             [
@@ -97,7 +230,7 @@ export function ClientDetailPage() {
           ))}
         </div>
 
-        {tab === "overview" && <OverviewTab client={client} />}
+        {tab === "overview" && <OverviewTab client={client} onSaved={setClient} />}
         {tab === "training" && <TrainingTab coach={coach} client={client} />}
         {tab === "progress" && <ProgressTab client={client} />}
       </main>
@@ -105,45 +238,439 @@ export function ClientDetailPage() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function SummaryCard({
+  client,
+  latestWeight,
+  remainingDays,
+  adherencePct,
+}: {
+  client: Client;
+  latestWeight: number | null;
+  remainingDays: number | null;
+  adherencePct: number;
+}) {
+  const expired = client.status === "EXPIRED" || (remainingDays !== null && remainingDays < 0);
+  const urgent = !expired && remainingDays !== null && remainingDays <= 5;
+
   return (
-    <div>
-      <p className="text-xs text-ink-faint">{label}</p>
-      <p className="font-medium text-ink">{value}</p>
+    <Card className="mb-4 border-r-4 border-r-brand-500">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="text-xl font-extrabold text-ink">{client.full_name}</h2>
+            <Badge tone={STATUS_TONE[client.status]}>{STATUS_LABEL[client.status]}</Badge>
+          </div>
+          <p className="text-sm text-ink-muted">{client.fitness_goal || "لا يوجد هدف محدد"}</p>
+        </div>
+        <div
+          className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
+            expired ? "bg-rose-500/10 text-rose-600" : urgent ? "bg-amber-400/15 text-amber-700" : "bg-brand-50 text-brand-700"
+          }`}
+        >
+          {remainingDays === null
+            ? "بلا تاريخ انتهاء"
+            : expired
+              ? "الاشتراك منتهي"
+              : `متبقي ${remainingDays} ${remainingDays === 1 ? "يوم" : "أيام"}`}
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl bg-surface-muted p-3 text-center">
+          <p className="text-lg font-extrabold text-ink">{latestWeight ? `${latestWeight} كغ` : "—"}</p>
+          <p className="mt-0.5 text-[11px] text-ink-faint">الوزن الحالي</p>
+        </div>
+        <div className="rounded-xl bg-surface-muted p-3 text-center">
+          <p className="text-lg font-extrabold text-ink">{client.age ? `${client.age} سنة` : "—"}</p>
+          <p className="mt-0.5 text-[11px] text-ink-faint">العمر</p>
+        </div>
+        <div className="rounded-xl bg-surface-muted p-3 text-center">
+          <p className="text-lg font-extrabold text-ink">{STATUS_LABEL[client.status]}</p>
+          <p className="mt-0.5 text-[11px] text-ink-faint">حالة الاشتراك</p>
+        </div>
+        <div className="rounded-xl bg-surface-muted p-3">
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-[11px] text-ink-faint">نسبة الالتزام</p>
+            <p className="text-xs font-bold text-ink">{adherencePct}%</p>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
+            <div
+              className={`h-full rounded-full ${
+                adherencePct >= 70 ? "bg-brand-500" : adherencePct >= 40 ? "bg-amber-400" : "bg-rose-500"
+              }`}
+              style={{ width: `${adherencePct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function QuickActionButton({
+  icon: Icon,
+  label,
+  onClick,
+  disabled,
+  badge,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  badge?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex min-w-[92px] shrink-0 flex-col items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-3 text-center transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span className="flex size-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+        <Icon className="size-4" />
+      </span>
+      <span className="text-[11px] font-semibold leading-tight text-ink">{label}</span>
+      {badge && <span className="text-[9px] font-bold text-amber-600">{badge}</span>}
+    </button>
+  );
+}
+
+function QuickActions({
+  onRecordWeight,
+  onRenew,
+  onSendLink,
+  onGenerateWorkout,
+  onViewProgress,
+  linkCopied,
+}: {
+  onRecordWeight: () => void;
+  onRenew: () => void;
+  onSendLink: () => void;
+  onGenerateWorkout: () => void;
+  onViewProgress: () => void;
+  linkCopied: boolean;
+}) {
+  return (
+    <div className="mb-6 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+      <QuickActionButton icon={TrendingUp} label="تسجيل الوزن" onClick={onRecordWeight} />
+      <QuickActionButton icon={RefreshCw} label="تجديد الاشتراك" onClick={onRenew} />
+      <QuickActionButton icon={Share2} label={linkCopied ? "تم النسخ ✓" : "إرسال رابط للعميل"} onClick={onSendLink} />
+      <QuickActionButton icon={Utensils} label="توليد خطة غذائية" badge="قريباً" disabled />
+      <QuickActionButton icon={Dumbbell} label="توليد برنامج تدريبي" onClick={onGenerateWorkout} />
+      <QuickActionButton icon={Eye} label="عرض التقدم" onClick={onViewProgress} />
     </div>
   );
 }
 
-function OverviewTab({ client }: { client: Client }) {
-  const bmi = client.weight && client.height ? client.weight / (client.height / 100) ** 2 : null;
+function CollapsibleSection({
+  icon: Icon,
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="border-b border-border last:border-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 py-3.5 text-right"
+      >
+        <span className="flex items-center gap-2">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+            <Icon className="size-4" />
+          </span>
+          <span className="text-sm font-bold text-ink">{title}</span>
+        </span>
+        <ChevronDown className={`size-4 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2">{children}</div>}
+    </div>
+  );
+}
+
+interface OverviewFormState {
+  full_name: string;
+  phone_number: string;
+  email: string;
+  age: string;
+  gender: "male" | "female";
+  height: string;
+  weight: string;
+  fitness_goal: string;
+  activity_level: string;
+  training_program: string;
+  medical_conditions: string;
+  allergies: string;
+  injuries: string;
+  status: ClientStatus;
+  subscription_started_at: string;
+  subscription_expires_at: string;
+  tags: string;
+  coach_notes: string;
+}
+
+function toFormState(client: Client): OverviewFormState {
+  return {
+    full_name: client.full_name ?? "",
+    phone_number: client.phone_number ?? "",
+    email: client.email ?? "",
+    age: client.age?.toString() ?? "",
+    gender: client.gender,
+    height: client.height?.toString() ?? "",
+    weight: client.weight?.toString() ?? "",
+    fitness_goal: client.fitness_goal ?? "",
+    activity_level: client.activity_level ?? "moderate",
+    training_program: client.training_program ?? "",
+    medical_conditions: client.medical_conditions ?? "",
+    allergies: client.allergies ?? "",
+    injuries: client.injuries ?? "",
+    status: client.status,
+    subscription_started_at: client.subscription_started_at ?? "",
+    subscription_expires_at: client.subscription_expires_at ?? "",
+    tags: client.tags?.join(", ") ?? "",
+    coach_notes: client.coach_notes ?? "",
+  };
+}
+
+function OverviewTab({ client, onSaved }: { client: Client; onSaved: (c: Client) => void }) {
+  const [form, setForm] = useState<OverviewFormState>(() => toFormState(client));
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  useEffect(() => {
+    setForm(toFormState(client));
+  }, [client]);
+
+  const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(toFormState(client)), [form, client]);
+
+  const bmi = form.weight && form.height ? Number(form.weight) / (Number(form.height) / 100) ** 2 : null;
+
+  async function handleSave() {
+    setSaving(true);
+    const { data, error } = await supabase
+      .from("clients")
+      .update({
+        full_name: form.full_name.trim(),
+        phone_number: form.phone_number.trim() || null,
+        email: form.email.trim() || null,
+        age: form.age ? Number(form.age) : null,
+        gender: form.gender,
+        height: form.height ? Number(form.height) : null,
+        weight: form.weight ? Number(form.weight) : null,
+        fitness_goal: form.fitness_goal.trim() || null,
+        activity_level: form.activity_level,
+        training_program: form.training_program.trim() || null,
+        medical_conditions: form.medical_conditions.trim() || null,
+        allergies: form.allergies.trim() || null,
+        injuries: form.injuries.trim() || null,
+        status: form.status,
+        subscription_started_at: form.subscription_started_at || null,
+        subscription_expires_at: form.subscription_expires_at || null,
+        tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        coach_notes: form.coach_notes.trim() || null,
+      })
+      .eq("id", client.id)
+      .select()
+      .single();
+    setSaving(false);
+    if (!error && data) {
+      onSaved(data as Client);
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 2000);
+    }
+  }
+
+  return (
+    <div className="pb-24">
       <Card>
-        <CardTitle>المعلومات الشخصية</CardTitle>
-        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <Field label="العمر" value={client.age ? `${client.age} سنة` : "—"} />
-          <Field label="الجنس" value={client.gender === "male" ? "ذكر" : "أنثى"} />
-          <Field label="الطول" value={client.height ? `${client.height} سم` : "—"} />
-          <Field label="الوزن" value={client.weight ? `${client.weight} كغ` : "—"} />
-          <Field label="مؤشر كتلة الجسم" value={bmi ? bmi.toFixed(1) : "—"} />
-          <Field label="مستوى النشاط" value={client.activity_level || "—"} />
+        <div className="-mt-2">
+          <CollapsibleSection icon={User} title="المعلومات الأساسية" defaultOpen>
+            <div>
+              <Label htmlFor="o_name">اسم العميل</Label>
+              <Input id="o_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="o_phone">الهاتف</Label>
+              <Input
+                id="o_phone"
+                dir="ltr"
+                value={form.phone_number}
+                onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="o_email">البريد الإلكتروني</Label>
+              <Input
+                id="o_email"
+                dir="ltr"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="o_age">العمر</Label>
+              <Input id="o_age" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="o_gender">الجنس</Label>
+              <select
+                id="o_gender"
+                value={form.gender}
+                onChange={(e) => setForm({ ...form, gender: e.target.value as "male" | "female" })}
+                className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+              >
+                <option value="male">ذكر</option>
+                <option value="female">أنثى</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="o_status">حالة العميل</Label>
+              <select
+                id="o_status"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as ClientStatus })}
+                className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+              >
+                <option value="ACTIVE">نشط</option>
+                <option value="PAUSED">متوقف</option>
+                <option value="EXPIRED">منتهي</option>
+              </select>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection icon={Ruler} title="القياسات والنشاط">
+            <div>
+              <Label htmlFor="o_height">الطول (سم)</Label>
+              <Input id="o_height" type="number" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="o_weight">الوزن (كغ)</Label>
+              <Input id="o_weight" type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="o_activity">مستوى النشاط</Label>
+              <select
+                id="o_activity"
+                value={form.activity_level}
+                onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
+                className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+              >
+                {ACTIVITY_LEVELS.map((a) => (
+                  <option key={a.value} value={a.value}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {bmi && (
+              <div className="rounded-lg bg-surface-muted px-3 py-2 text-xs text-ink-muted sm:col-span-2">
+                مؤشر كتلة الجسم (BMI): <span className="font-bold text-ink">{bmi.toFixed(1)}</span>
+              </div>
+            )}
+          </CollapsibleSection>
+
+          <CollapsibleSection icon={Target} title="الهدف والبرنامج">
+            <div>
+              <Label htmlFor="o_goal">الهدف</Label>
+              <Input id="o_goal" value={form.fitness_goal} onChange={(e) => setForm({ ...form, fitness_goal: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="o_program">البرنامج التدريبي</Label>
+              <Input
+                id="o_program"
+                value={form.training_program}
+                onChange={(e) => setForm({ ...form, training_program: e.target.value })}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="o_tags">الوسوم (Tags) — افصل بفاصلة</Label>
+              <Input id="o_tags" dir="ltr" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection icon={Calendar} title="الاشتراك">
+            <div>
+              <Label htmlFor="o_sub_start">تاريخ بدء الاشتراك</Label>
+              <Input
+                id="o_sub_start"
+                type="date"
+                value={form.subscription_started_at}
+                onChange={(e) => setForm({ ...form, subscription_started_at: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="o_sub_end">تاريخ انتهاء الاشتراك</Label>
+              <Input
+                id="o_sub_end"
+                type="date"
+                value={form.subscription_expires_at}
+                onChange={(e) => setForm({ ...form, subscription_expires_at: e.target.value })}
+              />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection icon={Heart} title="الحالة الصحية">
+            <div>
+              <Label htmlFor="o_medical">الأمراض</Label>
+              <Input
+                id="o_medical"
+                value={form.medical_conditions}
+                onChange={(e) => setForm({ ...form, medical_conditions: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="o_allergies">الحساسية</Label>
+              <Input id="o_allergies" value={form.allergies} onChange={(e) => setForm({ ...form, allergies: e.target.value })} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="o_injuries">الإصابات</Label>
+              <Input id="o_injuries" value={form.injuries} onChange={(e) => setForm({ ...form, injuries: e.target.value })} />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection icon={FileText} title="ملاحظات المدرب">
+            <div className="flex gap-3 rounded-xl border border-border bg-surface-muted p-3 sm:col-span-2">
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                <FileText className="size-3.5" />
+              </div>
+              <div className="flex-1">
+                <p className="mb-1.5 text-xs text-ink-faint">آخر ملاحظة</p>
+                <textarea
+                  id="o_notes"
+                  value={form.coach_notes}
+                  onChange={(e) => setForm({ ...form, coach_notes: e.target.value })}
+                  rows={3}
+                  placeholder="أضف ملاحظة عن هذا العميل..."
+                  className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                />
+              </div>
+            </div>
+          </CollapsibleSection>
         </div>
       </Card>
-      <Card>
-        <CardTitle>الحالة الصحية والهدف</CardTitle>
-        <div className="mt-3 flex flex-col gap-2 text-sm">
-          <Field label="الهدف" value={client.fitness_goal || "—"} />
-          <Field label="الأمراض" value={client.medical_conditions || "—"} />
-          <Field label="الحساسية" value={client.allergies || "—"} />
-          <Field label="الإصابات" value={client.injuries || "—"} />
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4">
+        <div className="pointer-events-auto flex w-full max-w-5xl items-center justify-between gap-3 rounded-2xl border border-border bg-surface/95 px-4 py-3 shadow-lg backdrop-blur">
+          <p className="text-xs text-ink-faint">
+            {savedFlash ? "تم الحفظ ✓" : dirty ? "لديك تعديلات غير محفوظة" : "كل التعديلات محفوظة"}
+          </p>
+          <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            حفظ التعديلات
+          </Button>
         </div>
-      </Card>
-      {client.coach_notes && (
-        <Card className="sm:col-span-2">
-          <CardTitle>ملاحظات المدرب</CardTitle>
-          <p className="mt-2 text-sm text-ink-muted">{client.coach_notes}</p>
-        </Card>
-      )}
+      </div>
     </div>
   );
 }
