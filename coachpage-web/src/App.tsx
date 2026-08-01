@@ -7,6 +7,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { ClientDetailPage } from "@/pages/ClientDetailPage";
 import { AdminPage } from "@/pages/AdminPage";
 import { GuidePage } from "@/pages/GuidePage";
 import { TermsPage } from "@/pages/TermsPage";
@@ -48,6 +49,14 @@ function App() {
           element={
             <RequireCoach>
               <DashboardPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/clients/:id"
+          element={
+            <RequireCoach>
+              <ClientDetailPage />
             </RequireCoach>
           }
         />

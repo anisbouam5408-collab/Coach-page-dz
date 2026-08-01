@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Dumbbell, LogOut, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
@@ -504,7 +504,9 @@ export function DashboardPage() {
                   {filteredClients.map((c) => (
                     <tr key={c.id} className="border-b border-border last:border-0">
                       <td className="py-3 font-medium text-ink">
-                        {c.full_name}
+                        <Link to={`/dashboard/clients/${c.id}`} className="hover:text-brand-600 hover:underline">
+                          {c.full_name}
+                        </Link>
                         {c.tags?.length > 0 && (
                           <div className="mt-1 flex flex-wrap gap-1">
                             {c.tags.map((t) => (
@@ -527,6 +529,11 @@ export function DashboardPage() {
                       </td>
                       <td className="py-3">
                         <div className="flex justify-end gap-1.5">
+                          <Link to={`/dashboard/clients/${c.id}`}>
+                            <Button variant="secondary" size="sm">
+                              التدريب والتقدم
+                            </Button>
+                          </Link>
                           <Button variant="ghost" size="sm" onClick={() => startEdit(c)}>
                             <Pencil className="size-3.5" />
                           </Button>

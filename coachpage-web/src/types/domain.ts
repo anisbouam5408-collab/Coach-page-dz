@@ -61,3 +61,77 @@ export interface PlatformSettings {
   coach_monthly_price: number;
   platform_name: string;
 }
+
+export interface Exercise {
+  id: number;
+  coach_id: number;
+  name: string;
+  muscle_group: string | null;
+  is_cardio: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface TrainingProgram {
+  id: number;
+  coach_id: number;
+  client_id: number | null;
+  name: string;
+  split_type: string | null;
+  is_template: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface TrainingDay {
+  id: number;
+  program_id: number;
+  name: string;
+  order_index: number;
+}
+
+export interface TrainingExercise {
+  id: number;
+  training_day_id: number;
+  exercise_id: number | null;
+  exercise_name: string;
+  sets: number | null;
+  reps: string | null;
+  rest_seconds: number | null;
+  is_cardio: boolean;
+  cardio_duration_minutes: number | null;
+  notes: string | null;
+  order_index: number;
+}
+
+export interface WeightLog {
+  id: number;
+  client_id: number;
+  date: string;
+  weight: number;
+}
+
+export interface MeasurementLog {
+  id: number;
+  client_id: number;
+  date: string;
+  body_fat_pct: number | null;
+  chest: number | null;
+  waist: number | null;
+  hips: number | null;
+  arm: number | null;
+  thigh: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export type ProgressPhotoType = "before" | "after" | "progress";
+
+export interface ProgressPhoto {
+  id: number;
+  client_id: number;
+  photo_url: string;
+  photo_type: ProgressPhotoType;
+  taken_at: string;
+  created_at: string;
+}
