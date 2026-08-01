@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import type { Coach } from "@/types/domain";
 import { LandingPage } from "@/pages/LandingPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -12,11 +13,22 @@ import { AdminPage } from "@/pages/AdminPage";
 import { GuidePage } from "@/pages/GuidePage";
 import { TermsPage } from "@/pages/TermsPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
+import { SubscriptionLockedPage } from "@/pages/SubscriptionLockedPage";
+
+// Trial and paid periods both end on subscription_expires_at; PENDING_APPROVAL
+// coaches aren't locked here since they haven't started a period at all yet.
+function isSubscriptionExpired(coach: Coach): boolean {
+  if (coach.subscription_status === "EXPIRED") return true;
+  if (coach.subscription_status === "PENDING_APPROVAL") return false;
+  if (!coach.subscription_expires_at) return false;
+  return new Date(coach.subscription_expires_at).getTime() < Date.now();
+}
 
 function RequireCoach({ children }: { children: React.ReactNode }) {
-  const { ready, session } = useAuthStore();
+  const { ready, session, coach } = useAuthStore();
   if (!ready) return null;
   if (!session) return <Navigate to="/login" replace />;
+  if (coach && isSubscriptionExpired(coach)) return <SubscriptionLockedPage coach={coach} />;
   return <>{children}</>;
 }
 
