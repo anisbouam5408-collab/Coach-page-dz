@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Dumbbell, Loader2 } from "lucide-react";
+import { Dumbbell, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -18,11 +18,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingConfirmation, setPendingConfirmation] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [verifying, setVerifying] = useState(false);
-  const [resent, setResent] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   async function createCoachRow(userId: string) {
     const { error: insertError } = await supabase.from("coaches").insert({
@@ -35,45 +31,6 @@ export function RegisterPage() {
       password_hash: crypto.randomUUID(),
     });
     return insertError;
-  }
-
-  async function handleVerifyOtp(e: FormEvent) {
-    e.preventDefault();
-    setOtpError(null);
-    setVerifying(true);
-
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token: otp.trim(),
-      type: "signup",
-    });
-
-    if (verifyError || !data.session || !data.user) {
-      setOtpError("الرمز غير صحيح أو منتهي الصلاحية. تحقق من الرقم أو اطلب رمزاً جديداً.");
-      setVerifying(false);
-      return;
-    }
-
-    const insertError = await createCoachRow(data.user.id);
-    if (insertError && !insertError.message.includes("duplicate key")) {
-      setOtpError(insertError.message);
-      setVerifying(false);
-      return;
-    }
-
-    await refreshCoach();
-    navigate("/dashboard");
-  }
-
-  async function handleResendOtp() {
-    setOtpError(null);
-    setResent(false);
-    const { error: resendError } = await supabase.auth.resend({ type: "signup", email });
-    if (resendError) {
-      setOtpError(resendError.message);
-      return;
-    }
-    setResent(true);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -106,7 +63,7 @@ export function RegisterPage() {
     }
 
     if (!data.session) {
-      setPendingConfirmation(true);
+      setConfirmationSent(true);
       setLoading(false);
       return;
     }
@@ -122,42 +79,19 @@ export function RegisterPage() {
     navigate("/dashboard");
   }
 
-  if (pendingConfirmation) {
+  if (confirmationSent) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-canvas px-6">
         <Card className="w-full max-w-md text-center">
-          <h1 className="text-xl font-bold text-ink">أدخل رمز التأكيد</h1>
+          <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500 text-white">
+            <Mail className="size-5" />
+          </div>
+          <h1 className="text-xl font-bold text-ink">تحقق من بريدك الإلكتروني</h1>
           <p className="mt-2 text-sm text-ink-muted">
-            أرسلنا رمزاً مكوّناً من 6 أرقام إلى {email}. أدخله هنا لتفعيل حسابك مباشرة.
+            أرسلنا رابط تفعيل إلى <span className="font-semibold text-ink">{email}</span>. افتح الرسالة واضغط على
+            الرابط لتفعيل حسابك مباشرة — سيتم فتح لوحة التحكم تلقائياً.
           </p>
-
-          <form onSubmit={handleVerifyOtp} className="mt-6 flex flex-col gap-4 text-right">
-            <div>
-              <Label htmlFor="otp">رمز التأكيد</Label>
-              <Input
-                id="otp"
-                dir="ltr"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                required
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                className="text-center text-lg tracking-[0.5em]"
-              />
-            </div>
-
-            {otpError && <p className="text-sm font-medium text-rose-600">{otpError}</p>}
-            {resent && <p className="text-sm font-medium text-brand-600">تم إرسال رمز جديد إلى بريدك.</p>}
-
-            <Button type="submit" disabled={verifying}>
-              {verifying && <Loader2 className="size-4 animate-spin" />}
-              تأكيد الحساب
-            </Button>
-            <Button type="button" variant="ghost" onClick={handleResendOtp}>
-              إعادة إرسال الرمز
-            </Button>
-          </form>
+          <p className="mt-4 text-xs text-ink-faint">لم تصلك الرسالة؟ تحقق من مجلد الرسائل غير المرغوبة (Spam).</p>
         </Card>
       </div>
     );
