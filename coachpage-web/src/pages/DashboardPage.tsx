@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   Calendar,
   Dumbbell,
   FileText,
@@ -542,64 +543,82 @@ export function DashboardPage() {
               {clients.length === 0 ? "لا يوجد عملاء بعد — أضف أول عميل لك." : "لا توجد نتائج مطابقة."}
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead>
-                  <tr className="border-b border-border text-ink-faint">
-                    <th className="py-2 font-medium">الاسم</th>
-                    <th className="py-2 font-medium">الهاتف</th>
-                    <th className="py-2 font-medium">الحالة</th>
-                    <th className="py-2 font-medium">الهدف</th>
-                    <th className="py-2 font-medium">تاريخ الانتهاء</th>
-                    <th className="py-2 font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClients.map((c) => (
-                    <tr key={c.id} className="border-b border-border last:border-0">
-                      <td className="py-3 font-medium text-ink">
-                        <Link to={`/dashboard/clients/${c.id}`} className="hover:text-brand-600 hover:underline">
-                          {c.full_name}
-                        </Link>
-                        {c.tags?.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {c.tags.map((t) => (
-                              <Badge key={t} tone="neutral" className="text-[10px]">
-                                {t}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 text-ink-muted" dir="ltr">
-                        {c.phone_number || "—"}
-                      </td>
-                      <td className="py-3">
+            <div className="flex flex-col gap-3">
+              {filteredClients.map((c) => (
+                <Card
+                  key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/dashboard/clients/${c.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/dashboard/clients/${c.id}`);
+                    }
+                  }}
+                  className="cursor-pointer p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm sm:p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-bold text-ink">{c.full_name}</p>
                         <Badge tone={STATUS_TONE[c.status]}>{STATUS_LABEL[c.status]}</Badge>
-                      </td>
-                      <td className="py-3 text-ink-muted">{c.fitness_goal || "—"}</td>
-                      <td className="py-3 text-ink-muted">
-                        {c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString("ar-DZ") : "—"}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex justify-end gap-1.5">
-                          <Link to={`/dashboard/clients/${c.id}`}>
-                            <Button variant="secondary" size="sm">
-                              التدريب والتقدم
-                            </Button>
-                          </Link>
-                          <Button variant="ghost" size="sm" onClick={() => startEdit(c)}>
-                            <Pencil className="size-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteClient(c.id)}>
-                            <Trash2 className="size-3.5 text-rose-500" />
-                          </Button>
+                      </div>
+                      {c.tags?.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {c.tags.map((t) => (
+                            <Badge key={t} tone="neutral" className="text-[10px]">
+                              {t}
+                            </Badge>
+                          ))}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                        <span dir="ltr">{c.phone_number || "—"}</span>
+                        <span>{c.fitness_goal || "بلا هدف محدد"}</span>
+                        <span>
+                          ينتهي: {c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString("ar-DZ") : "—"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEdit(c);
+                        }}
+                        className="flex size-8 items-center justify-center rounded-lg text-ink-faint hover:bg-surface-muted hover:text-ink"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClient(c.id);
+                        }}
+                        className="flex size-8 items-center justify-center rounded-lg text-ink-faint hover:bg-rose-50 hover:text-rose-500"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <Link
+                    to={`/dashboard/clients/${c.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-600"
+                  >
+                    فتح ملف العميل
+                    <ArrowLeft className="size-4 rtl:rotate-180" />
+                  </Link>
+                  <p className="mt-2 text-center text-[11px] leading-relaxed text-ink-faint">
+                    افتح ملف العميل لإدارة القياسات، البرامج، الحالة الصحية، الاشتراك، التقدم والملاحظات.
+                  </p>
+                </Card>
+              ))}
             </div>
           )}
         </Card>
