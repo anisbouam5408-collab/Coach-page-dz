@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Dumbbell, LogOut, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import {
+  Calendar,
+  Dumbbell,
+  FileText,
+  Heart,
+  LogOut,
+  Pencil,
+  Plus,
+  Ruler,
+  Search,
+  Target,
+  Trash2,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -81,6 +96,28 @@ const ACTIVITY_LEVELS: Array<{ value: string; label: string }> = [
   { value: "active", label: "نشيط" },
   { value: "very_active", label: "نشيط جداً" },
 ];
+
+function FormSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-2 border-b border-border pb-2">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+          <Icon className="size-4" />
+        </div>
+        <h4 className="text-sm font-bold text-ink">{title}</h4>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>
+    </div>
+  );
+}
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -314,159 +351,176 @@ export function DashboardPage() {
           </div>
 
           {formOpen && (
-            <div className="mb-6 grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-muted p-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="c_name">اسم العميل</Label>
-                <Input id="c_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="c_phone">الهاتف</Label>
-                <Input
-                  id="c_phone"
-                  dir="ltr"
-                  value={form.phone_number}
-                  onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_email">البريد الإلكتروني</Label>
-                <Input
-                  id="c_email"
-                  type="email"
-                  dir="ltr"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_age">العمر</Label>
-                <Input id="c_age" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="c_gender">الجنس</Label>
-                <select
-                  id="c_gender"
-                  value={form.gender}
-                  onChange={(e) => setForm({ ...form, gender: e.target.value as "male" | "female" })}
-                  className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
-                >
-                  <option value="male">ذكر</option>
-                  <option value="female">أنثى</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="c_height">الطول (سم)</Label>
-                <Input
-                  id="c_height"
-                  type="number"
-                  value={form.height}
-                  onChange={(e) => setForm({ ...form, height: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_weight">الوزن (كغ)</Label>
-                <Input id="c_weight" type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="c_activity">مستوى النشاط</Label>
-                <select
-                  id="c_activity"
-                  value={form.activity_level}
-                  onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
-                  className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
-                >
-                  {ACTIVITY_LEVELS.map((a) => (
-                    <option key={a.value} value={a.value}>
-                      {a.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="c_goal">الهدف</Label>
-                <Input id="c_goal" value={form.fitness_goal} onChange={(e) => setForm({ ...form, fitness_goal: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="c_program">البرنامج التدريبي</Label>
-                <Input
-                  id="c_program"
-                  value={form.training_program}
-                  onChange={(e) => setForm({ ...form, training_program: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_status">حالة العميل</Label>
-                <select
-                  id="c_status"
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value as ClientStatus })}
-                  className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
-                >
-                  <option value="ACTIVE">نشط</option>
-                  <option value="PAUSED">متوقف</option>
-                  <option value="EXPIRED">منتهي</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="c_tags">الوسوم (Tags) — افصل بفاصلة</Label>
-                <Input id="c_tags" dir="ltr" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="c_sub_start">تاريخ بدء الاشتراك</Label>
-                <Input
-                  id="c_sub_start"
-                  type="date"
-                  value={form.subscription_started_at}
-                  onChange={(e) => setForm({ ...form, subscription_started_at: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_sub_end">تاريخ انتهاء الاشتراك</Label>
-                <Input
-                  id="c_sub_end"
-                  type="date"
-                  value={form.subscription_expires_at}
-                  onChange={(e) => setForm({ ...form, subscription_expires_at: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_medical">الأمراض</Label>
-                <Input
-                  id="c_medical"
-                  value={form.medical_conditions}
-                  onChange={(e) => setForm({ ...form, medical_conditions: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_allergies">الحساسية</Label>
-                <Input
-                  id="c_allergies"
-                  value={form.allergies}
-                  onChange={(e) => setForm({ ...form, allergies: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="c_injuries">الإصابات</Label>
-                <Input
-                  id="c_injuries"
-                  value={form.injuries}
-                  onChange={(e) => setForm({ ...form, injuries: e.target.value })}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Label htmlFor="c_notes">ملاحظات المدرب</Label>
-                <textarea
-                  id="c_notes"
-                  value={form.coach_notes}
-                  onChange={(e) => setForm({ ...form, coach_notes: e.target.value })}
-                  rows={3}
-                  className="w-full rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
-                />
-              </div>
-              {clientError && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 sm:col-span-2">{clientError}</p>
-              )}
-              <div className="flex items-end gap-2 sm:col-span-2">
+            <div className="mb-6 flex flex-col gap-6 rounded-2xl border border-border bg-surface-muted p-4 sm:p-5">
+              <FormSection icon={User} title="المعلومات الأساسية">
+                <div>
+                  <Label htmlFor="c_name">اسم العميل</Label>
+                  <Input id="c_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="c_phone">الهاتف</Label>
+                  <Input
+                    id="c_phone"
+                    dir="ltr"
+                    value={form.phone_number}
+                    onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="c_email">البريد الإلكتروني</Label>
+                  <Input
+                    id="c_email"
+                    type="email"
+                    dir="ltr"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="c_age">العمر</Label>
+                  <Input id="c_age" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="c_gender">الجنس</Label>
+                  <select
+                    id="c_gender"
+                    value={form.gender}
+                    onChange={(e) => setForm({ ...form, gender: e.target.value as "male" | "female" })}
+                    className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                  >
+                    <option value="male">ذكر</option>
+                    <option value="female">أنثى</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="c_status">حالة العميل</Label>
+                  <select
+                    id="c_status"
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as ClientStatus })}
+                    className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                  >
+                    <option value="ACTIVE">نشط</option>
+                    <option value="PAUSED">متوقف</option>
+                    <option value="EXPIRED">منتهي</option>
+                  </select>
+                </div>
+              </FormSection>
+
+              <FormSection icon={Ruler} title="القياسات والنشاط">
+                <div>
+                  <Label htmlFor="c_height">الطول (سم)</Label>
+                  <Input
+                    id="c_height"
+                    type="number"
+                    value={form.height}
+                    onChange={(e) => setForm({ ...form, height: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="c_weight">الوزن (كغ)</Label>
+                  <Input id="c_weight" type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="c_activity">مستوى النشاط</Label>
+                  <select
+                    id="c_activity"
+                    value={form.activity_level}
+                    onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
+                    className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                  >
+                    {ACTIVITY_LEVELS.map((a) => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormSection>
+
+              <FormSection icon={Target} title="الهدف والبرنامج">
+                <div>
+                  <Label htmlFor="c_goal">الهدف</Label>
+                  <Input id="c_goal" value={form.fitness_goal} onChange={(e) => setForm({ ...form, fitness_goal: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="c_program">البرنامج التدريبي</Label>
+                  <Input
+                    id="c_program"
+                    value={form.training_program}
+                    onChange={(e) => setForm({ ...form, training_program: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="c_tags">الوسوم (Tags) — افصل بفاصلة</Label>
+                  <Input id="c_tags" dir="ltr" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+                </div>
+              </FormSection>
+
+              <FormSection icon={Calendar} title="الاشتراك">
+                <div>
+                  <Label htmlFor="c_sub_start">تاريخ بدء الاشتراك</Label>
+                  <Input
+                    id="c_sub_start"
+                    type="date"
+                    value={form.subscription_started_at}
+                    onChange={(e) => setForm({ ...form, subscription_started_at: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="c_sub_end">تاريخ انتهاء الاشتراك</Label>
+                  <Input
+                    id="c_sub_end"
+                    type="date"
+                    value={form.subscription_expires_at}
+                    onChange={(e) => setForm({ ...form, subscription_expires_at: e.target.value })}
+                  />
+                </div>
+              </FormSection>
+
+              <FormSection icon={Heart} title="الحالة الصحية">
+                <div>
+                  <Label htmlFor="c_medical">الأمراض</Label>
+                  <Input
+                    id="c_medical"
+                    value={form.medical_conditions}
+                    onChange={(e) => setForm({ ...form, medical_conditions: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="c_allergies">الحساسية</Label>
+                  <Input
+                    id="c_allergies"
+                    value={form.allergies}
+                    onChange={(e) => setForm({ ...form, allergies: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="c_injuries">الإصابات</Label>
+                  <Input
+                    id="c_injuries"
+                    value={form.injuries}
+                    onChange={(e) => setForm({ ...form, injuries: e.target.value })}
+                  />
+                </div>
+              </FormSection>
+
+              <FormSection icon={FileText} title="ملاحظات المدرب">
+                <div className="sm:col-span-2">
+                  <textarea
+                    id="c_notes"
+                    value={form.coach_notes}
+                    onChange={(e) => setForm({ ...form, coach_notes: e.target.value })}
+                    rows={3}
+                    placeholder="أي ملاحظات إضافية عن هذا العميل..."
+                    className="w-full rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-400/40"
+                  />
+                </div>
+              </FormSection>
+
+              {clientError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{clientError}</p>}
+
+              <div className="flex items-center gap-2">
                 <Button onClick={handleSaveClient}>{form.id ? "حفظ التعديلات" : "إضافة العميل"}</Button>
                 <Button
                   variant="ghost"
