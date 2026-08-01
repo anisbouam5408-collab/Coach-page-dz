@@ -1,17 +1,5 @@
 {
-  "builds": [
-    {
-      "src": "app.py",
-      "use": "@vercel/python",
-      "config": { "includeFiles": ["templates/**"] }
-    }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "app.py" }
-  ],
-  "functions": {
-    "app.py": {
-      "maxDuration": 45
-    }
-  }
+  "buildCommand": "cd coachpage-web && npm install && npm run build",
+  "outputDirectory": "coachpage-web/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
