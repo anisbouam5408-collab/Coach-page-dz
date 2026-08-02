@@ -2,19 +2,29 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
+  BarChart3,
   Calendar,
+  CalendarClock,
+  CreditCard,
   Dumbbell,
   FileText,
   Heart,
+  LayoutDashboard,
   LogOut,
+  MessageSquare,
+  Menu,
   Pencil,
   Plus,
+  Receipt,
   Ruler,
   Search,
+  Settings,
   Target,
   Trash2,
   User,
   Users,
+  Utensils,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -120,6 +130,187 @@ function FormSection({
   );
 }
 
+interface SidebarItem {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  onClick?: () => void;
+}
+
+function SidebarNav({
+  username,
+  items,
+  comingSoon,
+  onLogout,
+  open,
+  onClose,
+}: {
+  username: string;
+  items: SidebarItem[];
+  comingSoon: Array<{ key: string; label: string; icon: LucideIcon }>;
+  onLogout: () => void;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const content = (
+    <div className="flex h-full flex-col bg-ink text-white">
+      <div className="flex items-center gap-2 px-5 py-5">
+        <div className="flex size-9 items-center justify-center rounded-xl bg-brand-500 text-white">
+          <Dumbbell className="size-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-bold">CoachPage DZ</p>
+          <p className="truncate text-xs text-white/50">@{username}</p>
+        </div>
+        <button type="button" onClick={onClose} className="mr-auto text-white/60 hover:text-white lg:hidden">
+          <X className="size-5" />
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
+        <ul className="flex flex-col gap-1">
+          {items.map((item, i) => (
+            <li key={item.key}>
+              <button
+                type="button"
+                onClick={item.onClick}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                  i === 0 ? "bg-brand-500 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <item.icon className="size-5 shrink-0" />
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mb-1 mt-5 px-3 text-[11px] font-bold uppercase tracking-wide text-white/30">قريباً</p>
+        <ul className="flex flex-col gap-1">
+          {comingSoon.map((item) => (
+            <li key={item.key}>
+              <div className="flex w-full cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/30">
+                <item.icon className="size-5 shrink-0" />
+                {item.label}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="border-t border-white/10 px-3 py-4">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          <LogOut className="size-5" />
+          تسجيل الخروج
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:right-0 lg:z-20 lg:flex lg:w-64 lg:flex-col">{content}</aside>
+      {open && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+          <aside className="absolute inset-y-0 right-0 w-64">{content}</aside>
+        </div>
+      )}
+    </>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: string | number; tone?: "amber" | "rose" }) {
+  return (
+    <Card className="text-center">
+      <p
+        className={`text-3xl font-extrabold ${
+          tone === "amber" ? "text-amber-600" : tone === "rose" ? "text-rose-500" : "text-ink"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-ink-faint">{label}</p>
+    </Card>
+  );
+}
+
+function ActivityChart({ data }: { data: Array<{ date: string; count: number }> }) {
+  const max = Math.max(1, ...data.map((d) => d.count));
+  return (
+    <Card>
+      <CardTitle className="mb-1">نشاط العملاء</CardTitle>
+      <CardDescription className="mb-4">عدد تسجيلات الوزن يومياً عبر كل عملائك — آخر 14 يوماً.</CardDescription>
+      {data.every((d) => d.count === 0) ? (
+        <p className="py-8 text-center text-sm text-ink-faint">لا يوجد نشاط مسجل بعد فهاذ الفترة.</p>
+      ) : (
+        <div className="flex h-32 items-end gap-1.5">
+          {data.map((d) => (
+            <div key={d.date} className="flex flex-1 flex-col items-center gap-1.5">
+              <div
+                className="w-full rounded-t-md bg-brand-400"
+                style={{ height: `${Math.max(4, (d.count / max) * 100)}%` }}
+                title={`${d.date}: ${d.count}`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function RecentClientsCard({ clients, adherence }: { clients: Client[]; adherence: Record<number, number> }) {
+  function initials(name: string) {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("")
+      .toUpperCase();
+  }
+  function avatarTone(id: number) {
+    const tones = ["bg-brand-500", "bg-sky-500", "bg-amber-400", "bg-rose-500"];
+    return tones[id % tones.length];
+  }
+
+  return (
+    <Card>
+      <CardTitle className="mb-4">أحدث العملاء</CardTitle>
+      {clients.length === 0 ? (
+        <p className="py-8 text-center text-sm text-ink-faint">لا يوجد عملاء بعد.</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {clients.map((c) => {
+            const pct = adherence[c.id] ?? 0;
+            return (
+              <Link key={c.id} to={`/dashboard/clients/${c.id}`} className="flex items-center gap-3 hover:opacity-80">
+                <div
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${avatarTone(c.id)}`}
+                >
+                  {initials(c.full_name)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-ink">{c.full_name}</p>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
+                    <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+                <span className="shrink-0 text-xs font-bold text-ink-faint">{pct}%</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const { coach, signOut, refreshCoach } = useAuthStore();
@@ -133,6 +324,9 @@ export function DashboardPage() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "ALL">("ALL");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<Array<{ date: string; count: number }>>([]);
+  const [adherenceByClient, setAdherenceByClient] = useState<Record<number, number>>({});
   const plansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -153,6 +347,49 @@ export function DashboardPage() {
         setLoadingClients(false);
       });
   }, [coach]);
+
+  useEffect(() => {
+    if (clients.length === 0) return;
+    const clientIds = clients.map((c) => c.id);
+    const since = new Date();
+    since.setDate(since.getDate() - 27);
+    supabase
+      .from("weight_logs")
+      .select("client_id, date")
+      .in("client_id", clientIds)
+      .gte("date", since.toISOString().slice(0, 10))
+      .then(({ data }) => {
+        const logs = (data as Array<{ client_id: number; date: string }>) ?? [];
+
+        const counts: Record<number, number> = {};
+        for (const l of logs) counts[l.client_id] = (counts[l.client_id] ?? 0) + 1;
+        const adherence: Record<number, number> = {};
+        for (const c of clients) adherence[c.id] = Math.min(100, Math.round(((counts[c.id] ?? 0) / 4) * 100));
+        setAdherenceByClient(adherence);
+
+        const days: Array<{ date: string; count: number }> = [];
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = d.toISOString().slice(0, 10);
+          days.push({ date: key, count: logs.filter((l) => l.date === key).length });
+        }
+        setRecentActivity(days);
+      });
+  }, [clients]);
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const total = clients.length;
+    const active = clients.filter((c) => c.status === "ACTIVE").length;
+    const expiringSoon = clients.filter((c) => {
+      if (!c.subscription_expires_at) return false;
+      const days = Math.ceil((new Date(c.subscription_expires_at).getTime() - now) / (1000 * 60 * 60 * 24));
+      return days >= 0 && days <= 5;
+    }).length;
+    const expired = clients.filter((c) => c.status === "EXPIRED").length;
+    return { total, active, expiringSoon, expired };
+  }, [clients]);
 
   const filteredClients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -279,30 +516,71 @@ export function DashboardPage() {
     navigate("/");
   }
 
+  const sidebarItems: SidebarItem[] = [
+    { key: "dashboard", label: "لوحة التحكم", icon: LayoutDashboard, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+    { key: "clients", label: "العملاء", icon: Users, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "training", label: "البرامج التدريبية", icon: Dumbbell, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "subscriptions", label: "الاشتراكات", icon: CreditCard, onClick: () => plansRef.current?.scrollIntoView({ behavior: "smooth" }) },
+  ];
+  const sidebarComingSoon = [
+    { key: "nutrition", label: "البرامج الغذائية", icon: Utensils },
+    { key: "appointments", label: "المواعيد", icon: CalendarClock },
+    { key: "invoices", label: "الفواتير", icon: Receipt },
+    { key: "messages", label: "الرسائل", icon: MessageSquare },
+    { key: "reports", label: "التقارير", icon: BarChart3 },
+    { key: "settings", label: "الإعدادات", icon: Settings },
+  ];
+
   return (
-    <div className="min-h-svh bg-canvas">
+    <div className="min-h-svh bg-canvas lg:mr-64">
+      <SidebarNav
+        username={coach.username}
+        items={sidebarItems}
+        comingSoon={sidebarComingSoon}
+        onLogout={handleLogout}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       <SubscriptionBanner coach={coach} onUpgradeClick={() => plansRef.current?.scrollIntoView({ behavior: "smooth" })} />
 
       <header className="border-b border-border bg-surface px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-brand-500 text-white">
-              <Dumbbell className="size-5" />
-            </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex size-9 items-center justify-center rounded-xl border border-border-strong text-ink-muted lg:hidden"
+            >
+              <Menu className="size-5" />
+            </button>
             <div>
               <p className="font-bold text-ink">{coach.full_name || coach.username}</p>
               <p className="text-xs text-ink-faint">@{coach.username}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="lg:hidden">
             <LogOut className="size-4" />
-            تسجيل الخروج
           </Button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <Card>
+      <main className="px-6 py-8">
+        <h1 className="mb-5 text-xl font-bold text-ink">اللوحة الرئيسية</h1>
+
+        <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="إجمالي العملاء" value={stats.total} />
+          <StatCard label="الاشتراكات النشطة" value={stats.active} />
+          <StatCard label="قرب الانتهاء (٥ أيام)" value={stats.expiringSoon} tone="amber" />
+          <StatCard label="اشتراكات منتهية" value={stats.expired} tone="rose" />
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+          <ActivityChart data={recentActivity} />
+          <RecentClientsCard clients={clients.slice(0, 4)} adherence={adherenceByClient} />
+        </div>
+
+        <Card id="clients-section">
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
