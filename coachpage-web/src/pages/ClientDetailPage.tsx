@@ -168,22 +168,20 @@ export function ClientDetailPage() {
 
   return (
     <div className="min-h-svh bg-canvas">
-      <header className="border-b border-border bg-surface px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/dashboard"
-              className="flex size-9 items-center justify-center rounded-xl border border-border-strong text-ink-muted hover:bg-surface-muted"
-            >
-              <ArrowRight className="size-4 rtl:rotate-180" />
-            </Link>
-            <div>
-              <p className="font-bold text-ink">{client.full_name}</p>
-              <p className="text-xs text-ink-faint">{client.phone_number || client.email || "—"}</p>
-            </div>
+      <header className="relative border-b border-border bg-surface px-6 py-4">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <Link
+            to="/dashboard"
+            className="flex size-9 items-center justify-center rounded-xl border border-border-strong text-ink-muted hover:bg-surface-muted"
+          >
+            <ArrowRight className="size-4 rtl:rotate-180" />
+          </Link>
+          <div>
+            <p className="font-bold text-ink">{client.full_name}</p>
+            <p className="text-xs text-ink-faint">{client.phone_number || client.email || "—"}</p>
           </div>
-          <LanguageSwitcher />
         </div>
+        <LanguageSwitcher className="absolute top-1/2 left-6 -translate-y-1/2" />
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-6">

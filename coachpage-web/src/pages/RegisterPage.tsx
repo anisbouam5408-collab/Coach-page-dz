@@ -85,10 +85,8 @@ export function RegisterPage() {
   if (confirmationSent) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-canvas px-6">
-        <Card className="w-full max-w-md text-center">
-          <div className="mb-4 flex justify-end">
-            <LanguageSwitcher />
-          </div>
+        <Card className="relative w-full max-w-md text-center">
+          <LanguageSwitcher className="absolute top-4 left-4" />
           <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500 text-white">
             <Mail className="size-5" />
           </div>
@@ -102,10 +100,8 @@ export function RegisterPage() {
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-canvas px-6 py-12">
-      <Card className="w-full max-w-md">
-        <div className="mb-4 flex justify-end">
-          <LanguageSwitcher />
-        </div>
+      <Card className="relative w-full max-w-md">
+        <LanguageSwitcher className="absolute top-4 left-4" />
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500 text-white">
             <Dumbbell className="size-5" />

@@ -7,7 +7,7 @@ export function LanguageSwitcher({ className, dark }: { className?: string; dark
   return (
     <div
       className={cn(
-        "flex items-center gap-1 rounded-full border p-1",
+        "inline-flex items-center gap-0.5 rounded-full border p-0.5 text-[11px] font-extrabold",
         dark ? "border-white/15 bg-white/5" : "border-border-strong bg-surface",
         className,
       )}
@@ -18,11 +18,15 @@ export function LanguageSwitcher({ className, dark }: { className?: string; dark
         title="العربية"
         aria-label="العربية"
         className={cn(
-          "flex size-7 items-center justify-center rounded-full text-sm transition-opacity",
-          lang === "ar" ? "bg-brand-500/15 opacity-100 ring-1 ring-brand-500/40" : "opacity-40 hover:opacity-70",
+          "rounded-full px-2 py-1 transition-colors",
+          lang === "ar"
+            ? "bg-brand-500 text-white"
+            : dark
+              ? "text-white/50 hover:text-white/80"
+              : "text-ink-faint hover:text-ink-muted",
         )}
       >
-        🇩🇿
+        AR
       </button>
       <button
         type="button"
@@ -30,11 +34,15 @@ export function LanguageSwitcher({ className, dark }: { className?: string; dark
         title="Français"
         aria-label="Français"
         className={cn(
-          "flex size-7 items-center justify-center rounded-full text-sm transition-opacity",
-          lang === "fr" ? "bg-brand-500/15 opacity-100 ring-1 ring-brand-500/40" : "opacity-40 hover:opacity-70",
+          "rounded-full px-2 py-1 transition-colors",
+          lang === "fr"
+            ? "bg-brand-500 text-white"
+            : dark
+              ? "text-white/50 hover:text-white/80"
+              : "text-ink-faint hover:text-ink-muted",
         )}
       >
-        🇫🇷
+        FR
       </button>
     </div>
   );

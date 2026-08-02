@@ -202,7 +202,7 @@ function SidebarNav({
           <LogOut className="size-5" />
           {t("sidebar.logout")}
         </button>
-        <LanguageSwitcher dark className="mt-3 justify-center" />
+        <LanguageSwitcher dark className="mt-3" />
       </div>
     </div>
   );
