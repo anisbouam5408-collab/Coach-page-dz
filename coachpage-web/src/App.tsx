@@ -14,6 +14,7 @@ import { GuidePage } from "@/pages/GuidePage";
 import { TermsPage } from "@/pages/TermsPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { SubscriptionLockedPage } from "@/pages/SubscriptionLockedPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 // Trial and paid periods both end on subscription_expires_at; PENDING_APPROVAL
 // coaches aren't locked here since they haven't started a period at all yet.
@@ -69,6 +70,14 @@ function App() {
           element={
             <RequireCoach>
               <ClientDetailPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/settings"
+          element={
+            <RequireCoach>
+              <SettingsPage />
             </RequireCoach>
           }
         />

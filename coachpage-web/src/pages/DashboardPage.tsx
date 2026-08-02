@@ -521,6 +521,7 @@ export function DashboardPage() {
     { key: "clients", label: "العملاء", icon: Users, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
     { key: "training", label: "البرامج التدريبية", icon: Dumbbell, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
     { key: "subscriptions", label: "الاشتراكات", icon: CreditCard, onClick: () => plansRef.current?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "settings", label: "الإعدادات", icon: Settings, onClick: () => navigate("/dashboard/settings") },
   ];
   const sidebarComingSoon = [
     { key: "nutrition", label: "البرامج الغذائية", icon: Utensils },
@@ -528,7 +529,6 @@ export function DashboardPage() {
     { key: "invoices", label: "الفواتير", icon: Receipt },
     { key: "messages", label: "الرسائل", icon: MessageSquare },
     { key: "reports", label: "التقارير", icon: BarChart3 },
-    { key: "settings", label: "الإعدادات", icon: Settings },
   ];
 
   return (
