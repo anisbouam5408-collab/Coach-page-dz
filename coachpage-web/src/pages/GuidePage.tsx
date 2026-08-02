@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
+import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import { usePlans } from "@/hooks/usePlans";
 
@@ -218,6 +219,26 @@ export function GuidePage() {
               {whatsapp}
             </Button>
           </a>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <a
+              href="https://www.instagram.com/coachpage_dz?igsh=MTR3eXVsNzRycHNoMg=="
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram"
+              className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+            >
+              <InstagramIcon className="size-4.5" />
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61576424587886"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Facebook"
+              className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+            >
+              <FacebookIcon className="size-4.5" />
+            </a>
+          </div>
         </Card>
 
         <Link to="/register" className="mt-8 block">

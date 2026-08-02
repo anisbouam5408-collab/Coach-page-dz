@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
 import { usePlans } from "@/hooks/usePlans";
 import { useLanguage } from "@/lib/i18n";
 
@@ -141,7 +142,27 @@ export function LandingPage() {
         <p>
           © {new Date().getFullYear()} CoachPage DZ — {t("landing.footer.tagline")}
         </p>
-        <div className="mt-2 flex items-center justify-center gap-4">
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <a
+            href="https://www.instagram.com/coachpage_dz?igsh=MTR3eXVsNzRycHNoMg=="
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Instagram"
+            className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+          >
+            <InstagramIcon className="size-4.5" />
+          </a>
+          <a
+            href="https://www.facebook.com/profile.php?id=61576424587886"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Facebook"
+            className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+          >
+            <FacebookIcon className="size-4.5" />
+          </a>
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-4">
           <Link to="/terms" className="hover:text-ink hover:underline">
             {t("landing.footer.terms")}
           </Link>
