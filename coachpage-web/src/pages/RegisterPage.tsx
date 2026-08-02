@@ -7,10 +7,13 @@ import { Card } from "@/components/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
 import { savePendingRegistration } from "@/lib/pendingRegistration";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n";
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const refreshCoach = useAuthStore((s) => s.refreshCoach);
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -83,15 +86,15 @@ export function RegisterPage() {
     return (
       <div className="flex min-h-svh items-center justify-center bg-canvas px-6">
         <Card className="w-full max-w-md text-center">
+          <div className="mb-4 flex justify-end">
+            <LanguageSwitcher />
+          </div>
           <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500 text-white">
             <Mail className="size-5" />
           </div>
-          <h1 className="text-xl font-bold text-ink">تحقق من بريدك الإلكتروني</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            أرسلنا رابط تفعيل إلى <span className="font-semibold text-ink">{email}</span>. افتح الرسالة واضغط على
-            الرابط لتفعيل حسابك مباشرة — سيتم فتح لوحة التحكم تلقائياً.
-          </p>
-          <p className="mt-4 text-xs text-ink-faint">لم تصلك الرسالة؟ تحقق من مجلد الرسائل غير المرغوبة (Spam).</p>
+          <h1 className="text-xl font-bold text-ink">{t("auth.register.confirmTitle")}</h1>
+          <p className="mt-2 text-sm text-ink-muted">{t("auth.register.confirmBody", { email })}</p>
+          <p className="mt-4 text-xs text-ink-faint">{t("auth.register.confirmNote")}</p>
         </Card>
       </div>
     );
@@ -100,21 +103,24 @@ export function RegisterPage() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-canvas px-6 py-12">
       <Card className="w-full max-w-md">
+        <div className="mb-4 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500 text-white">
             <Dumbbell className="size-5" />
           </div>
-          <h1 className="text-xl font-bold text-ink">ابدأ 7 أيام مجاناً</h1>
-          <p className="mt-1 text-sm text-ink-muted">بدون بطاقة بنكية</p>
+          <h1 className="text-xl font-bold text-ink">{t("auth.register.title")}</h1>
+          <p className="mt-1 text-sm text-ink-muted">{t("auth.register.subtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <Label htmlFor="fullName">الاسم الكامل</Label>
+            <Label htmlFor="fullName">{t("auth.register.fullName")}</Label>
             <Input id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="username">اسم المستخدم (رابط صفحتك)</Label>
+            <Label htmlFor="username">{t("auth.register.username")}</Label>
             <Input
               id="username"
               required
@@ -125,15 +131,15 @@ export function RegisterPage() {
             />
           </div>
           <div>
-            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Label htmlFor="email">{t("auth.register.email")}</Label>
             <Input id="email" type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Label htmlFor="phone">{t("auth.register.phone")}</Label>
             <Input id="phone" dir="ltr" required value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="password">كلمة المرور</Label>
+            <Label htmlFor="password">{t("auth.register.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -149,14 +155,14 @@ export function RegisterPage() {
 
           <Button type="submit" disabled={loading} className="mt-2">
             {loading && <Loader2 className="size-4 animate-spin" />}
-            إنشاء الحساب
+            {t("auth.register.submit")}
           </Button>
         </form>
 
         <p className="mt-5 text-center text-sm text-ink-muted">
-          لديك حساب؟{" "}
+          {t("auth.register.haveAccount")}{" "}
           <Link to="/login" className="font-semibold text-brand-600 hover:underline">
-            سجّل الدخول
+            {t("auth.register.login")}
           </Link>
         </p>
       </Card>

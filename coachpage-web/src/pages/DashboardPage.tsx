@@ -32,11 +32,13 @@ import { Input, Label } from "@/components/ui/Input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
 import { usePlans } from "@/hooks/usePlans";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import { buildRenewWhatsAppLink } from "@/lib/whatsapp";
+import { useLanguage } from "@/lib/i18n";
 import type { Client, ClientStatus } from "@/types/domain";
 
 const STATUS_TONE: Record<ClientStatus, "brand" | "amber" | "rose"> = {
@@ -152,6 +154,7 @@ function SidebarNav({
   onClose: () => void;
 }) {
   const location = useLocation();
+  const { t } = useLanguage();
   function isActive(item: SidebarItem) {
     if (!item.path) return false;
     return item.path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.path);
@@ -197,8 +200,9 @@ function SidebarNav({
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/70 hover:bg-white/5 hover:text-white"
         >
           <LogOut className="size-5" />
-          تسجيل الخروج
+          {t("sidebar.logout")}
         </button>
+        <LanguageSwitcher dark className="mt-3 justify-center" />
       </div>
     </div>
   );
@@ -306,6 +310,7 @@ function RecentClientsCard({ clients, adherence }: { clients: Client[]; adherenc
 export function DashboardPage() {
   const navigate = useNavigate();
   const { coach, signOut, refreshCoach } = useAuthStore();
+  const { t } = useLanguage();
   const { plans } = usePlans();
   const platformSettings = usePlatformSettings();
   const [clients, setClients] = useState<Client[]>([]);
@@ -509,16 +514,16 @@ export function DashboardPage() {
   }
 
   const sidebarItems: SidebarItem[] = [
-    { key: "dashboard", label: "لوحة التحكم", icon: LayoutDashboard, path: "/dashboard", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
-    { key: "clients", label: "العملاء", icon: Users, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { key: "training", label: "البرامج التدريبية", icon: Dumbbell, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { key: "nutrition", label: "البرامج الغذائية", icon: Utensils, path: "/dashboard/nutrition", onClick: () => navigate("/dashboard/nutrition") },
-    { key: "appointments", label: "المواعيد", icon: CalendarClock, path: "/dashboard/appointments", onClick: () => navigate("/dashboard/appointments") },
-    { key: "subscriptions", label: "الاشتراكات", icon: CreditCard, onClick: () => plansRef.current?.scrollIntoView({ behavior: "smooth" }) },
-    { key: "invoices", label: "الفواتير", icon: Receipt, path: "/dashboard/invoices", onClick: () => navigate("/dashboard/invoices") },
-    { key: "messages", label: "الرسائل", icon: MessageSquare, path: "/dashboard/messages", onClick: () => navigate("/dashboard/messages") },
-    { key: "reports", label: "التقارير", icon: BarChart3, path: "/dashboard/reports", onClick: () => navigate("/dashboard/reports") },
-    { key: "settings", label: "الإعدادات", icon: Settings, path: "/dashboard/settings", onClick: () => navigate("/dashboard/settings") },
+    { key: "dashboard", label: t("sidebar.dashboard"), icon: LayoutDashboard, path: "/dashboard", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+    { key: "clients", label: t("sidebar.clients"), icon: Users, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "training", label: t("sidebar.training"), icon: Dumbbell, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "nutrition", label: t("sidebar.nutrition"), icon: Utensils, path: "/dashboard/nutrition", onClick: () => navigate("/dashboard/nutrition") },
+    { key: "appointments", label: t("sidebar.appointments"), icon: CalendarClock, path: "/dashboard/appointments", onClick: () => navigate("/dashboard/appointments") },
+    { key: "subscriptions", label: t("sidebar.subscriptions"), icon: CreditCard, onClick: () => plansRef.current?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "invoices", label: t("sidebar.invoices"), icon: Receipt, path: "/dashboard/invoices", onClick: () => navigate("/dashboard/invoices") },
+    { key: "messages", label: t("sidebar.messages"), icon: MessageSquare, path: "/dashboard/messages", onClick: () => navigate("/dashboard/messages") },
+    { key: "reports", label: t("sidebar.reports"), icon: BarChart3, path: "/dashboard/reports", onClick: () => navigate("/dashboard/reports") },
+    { key: "settings", label: t("sidebar.settings"), icon: Settings, path: "/dashboard/settings", onClick: () => navigate("/dashboard/settings") },
   ];
 
   return (
@@ -555,13 +560,13 @@ export function DashboardPage() {
       </header>
 
       <main className="px-6 py-8">
-        <h1 className="mb-5 text-xl font-bold text-ink">اللوحة الرئيسية</h1>
+        <h1 className="mb-5 text-xl font-bold text-ink">{t("dashboard.title")}</h1>
 
         <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="إجمالي العملاء" value={stats.total} />
-          <StatCard label="الاشتراكات النشطة" value={stats.active} />
-          <StatCard label="قرب الانتهاء (٥ أيام)" value={stats.expiringSoon} tone="amber" />
-          <StatCard label="اشتراكات منتهية" value={stats.expired} tone="rose" />
+          <StatCard label={t("dashboard.stat.total")} value={stats.total} />
+          <StatCard label={t("dashboard.stat.active")} value={stats.active} />
+          <StatCard label={t("dashboard.stat.expiringSoon")} value={stats.expiringSoon} tone="amber" />
+          <StatCard label={t("dashboard.stat.expired")} value={stats.expired} tone="rose" />
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">

@@ -26,13 +26,17 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguage } from "@/lib/i18n";
 import type {
   Client,
   ClientStatus,
   Coach,
   Exercise,
+  Invoice,
+  InvoiceStatus,
   MeasurementLog,
   ProgressPhoto,
   ProgressPhotoType,
@@ -72,11 +76,12 @@ function daysUntil(dateStr: string | null): number | null {
 export function ClientDetailPage() {
   const { id } = useParams();
   const { coach } = useAuthStore();
+  const { t } = useLanguage();
   const clientId = Number(id);
 
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"overview" | "training" | "progress">("overview");
+  const [tab, setTab] = useState<"overview" | "training" | "progress" | "payments">("overview");
 
   const [latestWeight, setLatestWeight] = useState<number | null>(null);
   const [recentLogCount, setRecentLogCount] = useState(0);
@@ -164,17 +169,20 @@ export function ClientDetailPage() {
   return (
     <div className="min-h-svh bg-canvas">
       <header className="border-b border-border bg-surface px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <Link
-            to="/dashboard"
-            className="flex size-9 items-center justify-center rounded-xl border border-border-strong text-ink-muted hover:bg-surface-muted"
-          >
-            <ArrowRight className="size-4 rtl:rotate-180" />
-          </Link>
-          <div>
-            <p className="font-bold text-ink">{client.full_name}</p>
-            <p className="text-xs text-ink-faint">{client.phone_number || client.email || "—"}</p>
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/dashboard"
+              className="flex size-9 items-center justify-center rounded-xl border border-border-strong text-ink-muted hover:bg-surface-muted"
+            >
+              <ArrowRight className="size-4 rtl:rotate-180" />
+            </Link>
+            <div>
+              <p className="font-bold text-ink">{client.full_name}</p>
+              <p className="text-xs text-ink-faint">{client.phone_number || client.email || "—"}</p>
+            </div>
           </div>
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -210,22 +218,23 @@ export function ClientDetailPage() {
           </Card>
         )}
 
-        <div className="mb-6 flex gap-2 border-b border-border">
+        <div className="mb-6 flex w-fit max-w-full gap-1 overflow-x-auto rounded-full bg-surface-muted p-1">
           {(
             [
-              { key: "overview", label: "نظرة عامة" },
-              { key: "training", label: "التدريب" },
-              { key: "progress", label: "متابعة التقدم" },
+              { key: "overview", label: t("clientDetail.tab.overview") },
+              { key: "progress", label: t("clientDetail.tab.measurements") },
+              { key: "training", label: t("clientDetail.tab.sessions") },
+              { key: "payments", label: t("clientDetail.tab.payments") },
             ] as const
-          ).map((t) => (
+          ).map((tabDef) => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
-                tab === t.key ? "border-brand-500 text-brand-600" : "border-transparent text-ink-muted hover:text-ink"
+              key={tabDef.key}
+              onClick={() => setTab(tabDef.key)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                tab === tabDef.key ? "bg-brand-500 text-white shadow-sm" : "text-ink-muted hover:text-ink"
               }`}
             >
-              {t.label}
+              {tabDef.label}
             </button>
           ))}
         </div>
@@ -233,6 +242,7 @@ export function ClientDetailPage() {
         {tab === "overview" && <OverviewTab client={client} onSaved={setClient} />}
         {tab === "training" && <TrainingTab coach={coach} client={client} />}
         {tab === "progress" && <ProgressTab client={client} />}
+        {tab === "payments" && <PaymentsTab client={client} coach={coach} />}
       </main>
     </div>
   );
@@ -1586,6 +1596,157 @@ function ProgressTab({ client }: { client: Client }) {
             </div>
           ))}
         </div>
+      </Card>
+    </div>
+  );
+}
+
+const PAYMENT_STATUS_LABEL: Record<InvoiceStatus, string> = {
+  PENDING: "بانتظار الدفع",
+  PAID: "مدفوعة",
+  CANCELLED: "ملغاة",
+};
+const PAYMENT_STATUS_TONE: Record<InvoiceStatus, "amber" | "brand" | "rose"> = {
+  PENDING: "amber",
+  PAID: "brand",
+  CANCELLED: "rose",
+};
+
+function PaymentsTab({ client, coach }: { client: Client; coach: Coach }) {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function loadInvoices() {
+    const { data } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("client_id", client.id)
+      .order("id", { ascending: false });
+    setInvoices((data as Invoice[]) ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    void loadInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client.id]);
+
+  async function handleCreate() {
+    const value = Number(amount);
+    if (!value || value <= 0) return;
+    setSaving(true);
+    await supabase.from("invoices").insert({
+      coach_id: coach.id,
+      client_id: client.id,
+      amount_dzd: value,
+      description: description.trim() || null,
+    });
+    setSaving(false);
+    setAmount("");
+    setDescription("");
+    setFormOpen(false);
+    await loadInvoices();
+  }
+
+  async function updateStatus(id: number, status: InvoiceStatus) {
+    await supabase
+      .from("invoices")
+      .update({ status, paid_at: status === "PAID" ? new Date().toISOString() : null })
+      .eq("id", id);
+    await loadInvoices();
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("حذف هذه الفاتورة؟")) return;
+    await supabase.from("invoices").delete().eq("id", id);
+    await loadInvoices();
+  }
+
+  const totalPending = invoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.amount_dzd, 0);
+  const totalPaid = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.amount_dzd, 0);
+
+  if (loading) {
+    return <p className="py-8 text-center text-sm text-ink-faint">جارٍ التحميل...</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="text-center">
+          <p className="text-2xl font-extrabold text-amber-600">{totalPending.toLocaleString("ar-DZ")} دج</p>
+          <p className="mt-1 text-xs text-ink-faint">بانتظار الدفع</p>
+        </Card>
+        <Card className="text-center">
+          <p className="text-2xl font-extrabold text-brand-600">{totalPaid.toLocaleString("ar-DZ")} دج</p>
+          <p className="mt-1 text-xs text-ink-faint">مدفوع</p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>فواتير ومدفوعات {client.full_name}</CardTitle>
+          <Button size="sm" onClick={() => setFormOpen((v) => !v)}>
+            <Plus className="size-4" />
+            فاتورة جديدة
+          </Button>
+        </CardHeader>
+
+        {formOpen && (
+          <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl bg-surface-muted p-3">
+            <div>
+              <Label htmlFor="p_amount">المبلغ (دج)</Label>
+              <Input id="p_amount" type="number" dir="ltr" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="p_desc">الوصف</Label>
+              <Input id="p_desc" placeholder="مثال: اشتراك شهري" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <Button size="sm" onClick={handleCreate} disabled={saving}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+              حفظ
+            </Button>
+          </div>
+        )}
+
+        {invoices.length === 0 ? (
+          <p className="py-8 text-center text-sm text-ink-faint">لا توجد فواتير لهذا العميل بعد.</p>
+        ) : (
+          <div className="flex flex-col divide-y divide-border">
+            {invoices.map((inv) => (
+              <div key={inv.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-sm font-bold text-ink">
+                    {inv.amount_dzd.toLocaleString("ar-DZ")} دج
+                    <Badge tone={PAYMENT_STATUS_TONE[inv.status]}>{PAYMENT_STATUS_LABEL[inv.status]}</Badge>
+                  </p>
+                  {inv.description && <p className="mt-0.5 truncate text-xs text-ink-faint">{inv.description}</p>}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {inv.status === "PENDING" && (
+                    <button
+                      type="button"
+                      onClick={() => updateStatus(inv.id, "PAID")}
+                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-600 hover:bg-brand-50"
+                    >
+                      تحديد كمدفوعة
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(inv.id)}
+                    className="flex size-8 items-center justify-center rounded-lg text-ink-faint hover:bg-surface-muted hover:text-rose-500"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );
