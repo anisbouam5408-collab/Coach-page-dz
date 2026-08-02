@@ -135,3 +135,54 @@ export interface ProgressPhoto {
   taken_at: string;
   created_at: string;
 }
+
+export interface NutritionProgram {
+  id: number;
+  coach_id: number;
+  client_id: number | null;
+  name: string;
+  daily_calories: number | null;
+  is_template: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface NutritionMeal {
+  id: number;
+  program_id: number;
+  name: string;
+  time_of_day: string | null;
+  items: string | null;
+  calories: number | null;
+  order_index: number;
+}
+
+export type AppointmentStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED";
+
+export interface Appointment {
+  id: number;
+  coach_id: number;
+  client_id: number | null;
+  title: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  location: string | null;
+  status: AppointmentStatus;
+  notes: string | null;
+  created_at: string;
+}
+
+export type InvoiceStatus = "PENDING" | "PAID" | "CANCELLED";
+
+export interface Invoice {
+  id: number;
+  coach_id: number;
+  client_id: number | null;
+  amount_dzd: number;
+  description: string | null;
+  status: InvoiceStatus;
+  issued_at: string;
+  due_date: string | null;
+  paid_at: string | null;
+  created_at: string;
+}

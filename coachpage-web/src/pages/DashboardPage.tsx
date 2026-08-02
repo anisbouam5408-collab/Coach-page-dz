@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   BarChart3,
@@ -134,24 +134,28 @@ interface SidebarItem {
   key: string;
   label: string;
   icon: LucideIcon;
+  path?: string;
   onClick?: () => void;
 }
 
 function SidebarNav({
   username,
   items,
-  comingSoon,
   onLogout,
   open,
   onClose,
 }: {
   username: string;
   items: SidebarItem[];
-  comingSoon: Array<{ key: string; label: string; icon: LucideIcon }>;
   onLogout: () => void;
   open: boolean;
   onClose: () => void;
 }) {
+  const location = useLocation();
+  function isActive(item: SidebarItem) {
+    if (!item.path) return false;
+    return item.path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.path);
+  }
   const content = (
     <div className="flex h-full flex-col bg-ink text-white">
       <div className="flex items-center gap-2 px-5 py-5">
@@ -169,30 +173,18 @@ function SidebarNav({
 
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="flex flex-col gap-1">
-          {items.map((item, i) => (
+          {items.map((item) => (
             <li key={item.key}>
               <button
                 type="button"
                 onClick={item.onClick}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
-                  i === 0 ? "bg-brand-500 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
+                  isActive(item) ? "bg-brand-500 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <item.icon className="size-5 shrink-0" />
                 {item.label}
               </button>
-            </li>
-          ))}
-        </ul>
-
-        <p className="mb-1 mt-5 px-3 text-[11px] font-bold uppercase tracking-wide text-white/30">قريباً</p>
-        <ul className="flex flex-col gap-1">
-          {comingSoon.map((item) => (
-            <li key={item.key}>
-              <div className="flex w-full cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/30">
-                <item.icon className="size-5 shrink-0" />
-                {item.label}
-              </div>
             </li>
           ))}
         </ul>
@@ -517,18 +509,16 @@ export function DashboardPage() {
   }
 
   const sidebarItems: SidebarItem[] = [
-    { key: "dashboard", label: "لوحة التحكم", icon: LayoutDashboard, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+    { key: "dashboard", label: "لوحة التحكم", icon: LayoutDashboard, path: "/dashboard", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
     { key: "clients", label: "العملاء", icon: Users, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
     { key: "training", label: "البرامج التدريبية", icon: Dumbbell, onClick: () => document.getElementById("clients-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { key: "nutrition", label: "البرامج الغذائية", icon: Utensils, path: "/dashboard/nutrition", onClick: () => navigate("/dashboard/nutrition") },
+    { key: "appointments", label: "المواعيد", icon: CalendarClock, path: "/dashboard/appointments", onClick: () => navigate("/dashboard/appointments") },
     { key: "subscriptions", label: "الاشتراكات", icon: CreditCard, onClick: () => plansRef.current?.scrollIntoView({ behavior: "smooth" }) },
-    { key: "settings", label: "الإعدادات", icon: Settings, onClick: () => navigate("/dashboard/settings") },
-  ];
-  const sidebarComingSoon = [
-    { key: "nutrition", label: "البرامج الغذائية", icon: Utensils },
-    { key: "appointments", label: "المواعيد", icon: CalendarClock },
-    { key: "invoices", label: "الفواتير", icon: Receipt },
-    { key: "messages", label: "الرسائل", icon: MessageSquare },
-    { key: "reports", label: "التقارير", icon: BarChart3 },
+    { key: "invoices", label: "الفواتير", icon: Receipt, path: "/dashboard/invoices", onClick: () => navigate("/dashboard/invoices") },
+    { key: "messages", label: "الرسائل", icon: MessageSquare, path: "/dashboard/messages", onClick: () => navigate("/dashboard/messages") },
+    { key: "reports", label: "التقارير", icon: BarChart3, path: "/dashboard/reports", onClick: () => navigate("/dashboard/reports") },
+    { key: "settings", label: "الإعدادات", icon: Settings, path: "/dashboard/settings", onClick: () => navigate("/dashboard/settings") },
   ];
 
   return (
@@ -536,7 +526,6 @@ export function DashboardPage() {
       <SidebarNav
         username={coach.username}
         items={sidebarItems}
-        comingSoon={sidebarComingSoon}
         onLogout={handleLogout}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

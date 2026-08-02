@@ -15,6 +15,11 @@ import { TermsPage } from "@/pages/TermsPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { SubscriptionLockedPage } from "@/pages/SubscriptionLockedPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { ReportsPage } from "@/pages/ReportsPage";
+import { NutritionPage } from "@/pages/NutritionPage";
+import { AppointmentsPage } from "@/pages/AppointmentsPage";
+import { InvoicesPage } from "@/pages/InvoicesPage";
+import { MessagesPage } from "@/pages/MessagesPage";
 
 // Trial and paid periods both end on subscription_expires_at; PENDING_APPROVAL
 // coaches aren't locked here since they haven't started a period at all yet.
@@ -78,6 +83,46 @@ function App() {
           element={
             <RequireCoach>
               <SettingsPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/reports"
+          element={
+            <RequireCoach>
+              <ReportsPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/nutrition"
+          element={
+            <RequireCoach>
+              <NutritionPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/appointments"
+          element={
+            <RequireCoach>
+              <AppointmentsPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/invoices"
+          element={
+            <RequireCoach>
+              <InvoicesPage />
+            </RequireCoach>
+          }
+        />
+        <Route
+          path="/dashboard/messages"
+          element={
+            <RequireCoach>
+              <MessagesPage />
             </RequireCoach>
           }
         />
