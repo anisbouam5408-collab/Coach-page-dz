@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
 import { usePlans } from "@/hooks/usePlans";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import { useLanguage } from "@/lib/i18n";
 
 export function LandingPage() {
   const { plans } = usePlans();
+  const platformSettings = usePlatformSettings();
+  const whatsapp = platformSettings?.owner_whatsapp || "213553093511";
   const { t, lang } = useLanguage();
   const bestValueCode = "QUARTERLY";
   const locale = lang === "fr" ? "fr-DZ" : "ar-DZ";
@@ -142,24 +145,33 @@ export function LandingPage() {
         <p>
           © {new Date().getFullYear()} CoachPage DZ — {t("landing.footer.tagline")}
         </p>
-        <div className="mt-4 flex items-center justify-center gap-3">
+        <div className="mt-5 flex items-center justify-center gap-4">
+          <a
+            href={`https://wa.me/${whatsapp}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="WhatsApp"
+            className="block size-10 transition-transform hover:-translate-y-0.5"
+          >
+            <WhatsAppIcon className="size-full" />
+          </a>
           <a
             href="https://www.instagram.com/coachpage_dz?igsh=MTR3eXVsNzRycHNoMg=="
             target="_blank"
             rel="noreferrer"
             aria-label="Instagram"
-            className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+            className="block size-10 transition-transform hover:-translate-y-0.5"
           >
-            <InstagramIcon className="size-4.5" />
+            <InstagramIcon className="size-full" />
           </a>
           <a
             href="https://www.facebook.com/profile.php?id=61576424587886"
             target="_blank"
             rel="noreferrer"
             aria-label="Facebook"
-            className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+            className="block size-10 transition-transform hover:-translate-y-0.5"
           >
-            <FacebookIcon className="size-4.5" />
+            <FacebookIcon className="size-full" />
           </a>
         </div>
         <div className="mt-4 flex items-center justify-center gap-4">

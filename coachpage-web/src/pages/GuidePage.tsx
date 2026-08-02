@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
-import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import { usePlans } from "@/hooks/usePlans";
 
@@ -219,24 +219,34 @@ export function GuidePage() {
               {whatsapp}
             </Button>
           </a>
-          <div className="mt-4 flex items-center justify-center gap-3">
+          <p className="mt-5 text-xs font-semibold text-ink-faint">أو تابعنا على</p>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <a
+              href={`https://wa.me/${whatsapp}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="WhatsApp"
+              className="block size-10 transition-transform hover:-translate-y-0.5"
+            >
+              <WhatsAppIcon className="size-full" />
+            </a>
             <a
               href="https://www.instagram.com/coachpage_dz?igsh=MTR3eXVsNzRycHNoMg=="
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram"
-              className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+              className="block size-10 transition-transform hover:-translate-y-0.5"
             >
-              <InstagramIcon className="size-4.5" />
+              <InstagramIcon className="size-full" />
             </a>
             <a
               href="https://www.facebook.com/profile.php?id=61576424587886"
               target="_blank"
               rel="noreferrer"
               aria-label="Facebook"
-              className="flex size-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+              className="block size-10 transition-transform hover:-translate-y-0.5"
             >
-              <FacebookIcon className="size-4.5" />
+              <FacebookIcon className="size-full" />
             </a>
           </div>
         </Card>
