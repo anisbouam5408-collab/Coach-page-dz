@@ -44,6 +44,7 @@
 
   html {
     color-scheme: light;
+    overflow-x: hidden;
   }
 
   body {
@@ -52,6 +53,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
   ::selection {

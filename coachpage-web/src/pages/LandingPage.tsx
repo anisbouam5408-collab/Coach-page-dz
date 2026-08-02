@@ -28,18 +28,18 @@ export function LandingPage() {
 
   return (
     <div className="min-h-svh bg-canvas">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-brand-500 text-white">
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-6 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white">
             <Dumbbell className="size-5" />
           </div>
-          <span className="text-lg font-extrabold text-ink">CoachPage DZ</span>
+          <span className="truncate text-lg font-extrabold text-ink">CoachPage DZ</span>
         </div>
-        <nav className="flex items-center gap-3">
+        <nav className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link to="/guide" className="hidden text-sm font-medium text-ink-muted hover:text-ink sm:block">
             {t("nav.guide")}
           </Link>
-          <Link to="/login">
+          <Link to="/login" className="hidden sm:block">
             <Button variant="ghost" size="sm">
               {t("nav.login")}
             </Button>
