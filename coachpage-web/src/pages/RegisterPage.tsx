@@ -121,10 +121,19 @@ export function RegisterPage() {
               id="username"
               required
               dir="ltr"
+              placeholder="ahmed_coach"
               pattern="[a-zA-Z0-9_]+"
               value={username}
-              onChange={(e) => setUsername(e.target.value.trim())}
+              onChange={(e) =>
+                setUsername(
+                  e.target.value
+                    .trim()
+                    .replace(/\s+/g, "_")
+                    .replace(/[^a-zA-Z0-9_]/g, ""),
+                )
+              }
             />
+            <p className="mt-1 text-xs text-ink-faint">{t("auth.register.usernameHint")}</p>
           </div>
           <div>
             <Label htmlFor="email">{t("auth.register.email")}</Label>
